@@ -1,0 +1,155 @@
+﻿<UserControl x:Class="MDP_PPG.PagedViews.UC_SignalDataViewer"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:MDP_PPG.PagedViews"
+             xmlns:gif="http://wpfanimatedgif.codeplex.com"
+             xmlns:convs="clr-namespace:MDP_PPG.Converters"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+
+    <UserControl.Resources>
+
+        <convs:Parent2ChildrenMessageConverter
+            ChoseMessage="Выберите запись для просмотра сигнала" 
+            EmptyMessage="Для данной записи нет внесенных сигнала" 
+            x:Key="parent2MessageConverter"/>
+
+        <Style TargetType="ContentControl" x:Key="infoContent">
+            <Style.Triggers>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition  Binding="{Binding IsLoadingData}" Value="False"/>
+                        <Condition  Binding="{Binding Plot}" Value="{x:Null}"/>
+                    </MultiDataTrigger.Conditions>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ContentControl">
+                                <TextBlock Text="{Binding Recording, Converter={StaticResource parent2MessageConverter}}" 
+                                           TextWrapping="Wrap"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </MultiDataTrigger>
+                <DataTrigger Binding="{Binding IsLoadingData}" Value="True">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ContentControl">
+                                <Image Width="200" 
+                                       gif:ImageBehavior.AnimatedSource="../Resources/loading.gif"
+                                       gif:ImageBehavior.RepeatBehavior="Forever"/>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        
+    </UserControl.Resources>
+
+    <Grid>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <WrapPanel>
+            <TextBlock Text="Масштаб по времени"
+                       Margin="3"/>
+            <TextBox Text="{Binding Plot.SampleWidth, UpdateSourceTrigger=PropertyChanged}"
+                     Width="30"
+                     Margin="3,3,10,3"/>
+
+            <TextBlock Text="Масштаб по величине"
+                       Margin="3"/>
+            <TextBox Text="{Binding Plot.Y_Scale, UpdateSourceTrigger=PropertyChanged}"
+                     Width="30"
+                     Margin="3"/>
+        </WrapPanel>
+
+        <ContentControl Style="{StaticResource infoContent}"
+                        Grid.Row="1" >
+
+            <ScrollViewer HorizontalScrollBarVisibility="Visible"
+                          VerticalScrollBarVisibility="Visible"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch"
+                          Padding="10"
+                          Background="Gainsboro">
+
+                <Grid Background="White"
+                      Margin="10"
+                      VerticalAlignment="Center">
+
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                    </Grid.RowDefinitions>
+
+                    <ItemsControl ItemsSource="{Binding Plot.LineParts}"
+                                  Margin="10,10,10,0">
+
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Width="{Binding SampleWidth}">
+                                    <Line X1="0" X2="{Binding SampleWidth}" 
+                                          Y1="{Binding S1_Display}" Y2="{Binding S2_Display}" 
+                                          Stroke="Black" StrokeThickness="3"/>
+                                    <Line X1="0" X2="0" 
+                                          Y1="{Binding MinSignalValue_Display}" Y2="{Binding MaxSignalValue_Display}" 
+                                          Stroke="Gray" StrokeThickness="1"/>
+                                    <Line X1="0" X2="0" 
+                                          Y1="{Binding MinSignalValue_Display}" Y2="{Binding MaxSignalValue_Display}" 
+                                          Stroke="OrangeRed" StrokeThickness="2"
+                                          Visibility="{Binding T2_Visibility}"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+
+                    </ItemsControl>
+
+                    <ItemsControl ItemsSource="{Binding Plot.LineParts}"
+                                  Grid.Row="1"
+                                  Margin="10,0,10,10">
+
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Width="{Binding TimeLinePartWidth}">
+                                    <TextBlock Text="{Binding T2_Str}"
+                                               Visibility="{Binding T2_Visibility}"
+                                               Width="{Binding TimeLinePartWidth}"/>
+                                    <Line X1="0" X2="0" 
+                                          Y1="-2" Y2="15" 
+                                          Stroke="OrangeRed" StrokeThickness="2"
+                                          Visibility="{Binding T2_Visibility}"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>  
+                        
+                    </ItemsControl>
+
+                </Grid>
+
+            </ScrollViewer>
+
+        </ContentControl>
+
+    </Grid>
+    
+</UserControl>

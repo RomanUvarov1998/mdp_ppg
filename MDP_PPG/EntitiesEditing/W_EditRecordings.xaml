@@ -1,0 +1,49 @@
+﻿<Window x:Class="MDP_PPG.EntitiesEditing.W_EditRecordings"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:MDP_PPG.EntitiesEditing"
+        xmlns:km="clr-namespace:PPG_Database.KeepingModels;assembly=PPG_Database"
+        mc:Ignorable="d"
+        Title="W_EditRecordings" Height="450" Width="800" SizeToContent="WidthAndHeight" ResizeMode="NoResize">
+
+    <Grid IsEnabled="{Binding IsGUIEnabled}">
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Orientation="Horizontal">
+            
+            <local:UC_ValidativeTextBox x:Name="vtbRecordingDateTime" 
+                                        FieldName="Дата и время записи"
+                                        ErrMsgText="{x:Static km:Recording.DATE_TIME_FORMAT}"/>
+            
+            <Button Content="Загрузить запись"
+                    Click="Btn_LoadRecording_Click"/>
+            
+        </StackPanel>
+        
+        <WrapPanel Grid.Row="1" 
+                   FlowDirection="RightToLeft" >
+
+            <Button x:Name="btnOk"
+                    Content="OK" 
+                    IsDefault="True" 
+                    Click="ButtonOk_OnClick"
+                    IsEnabled="{Binding BtnOkActive}"/>
+
+            <Button Content="Отмена" 
+                    IsCancel="True" 
+                    Click="ButtonCancel_OnClick"/>
+
+            <TextBlock Text="{Binding DataLoadingMessage}"
+                       HorizontalAlignment="Stretch"
+                       TextWrapping="Wrap"/>
+        </WrapPanel>
+        
+    </Grid>
+    
+</Window>

@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29709.97
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MDP_PPG", "MDP_PPG\MDP_PPG.csproj", "{B5DE8085-7D11-41E1-8D3A-0FE10BDD377D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PPG_Database", "PPG_Database\PPG_Database.csproj", "{9AE82AAA-3F3A-4B09-8C74-CB6244275D83}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B5DE8085-7D11-41E1-8D3A-0FE10BDD377D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B5DE8085-7D11-41E1-8D3A-0FE10BDD377D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B5DE8085-7D11-41E1-8D3A-0FE10BDD377D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B5DE8085-7D11-41E1-8D3A-0FE10BDD377D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9AE82AAA-3F3A-4B09-8C74-CB6244275D83}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9AE82AAA-3F3A-4B09-8C74-CB6244275D83}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9AE82AAA-3F3A-4B09-8C74-CB6244275D83}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9AE82AAA-3F3A-4B09-8C74-CB6244275D83}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {82D83572-2BBC-457A-9B22-516AAA1D6B97}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,8 @@
+MDP_PPG/bin
+MDP_PPG/obj
+PPG_Database/bin
+PPG_Database/obj
+"Файлы записи"/
+.vs/
+*.g.i.cs
+packages/
