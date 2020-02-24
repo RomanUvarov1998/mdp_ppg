@@ -2,7 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -15,15 +17,15 @@ namespace MDP_PPG.ViewModels
 		{
 
 		}
-		public void SetData(SignalData instance)
+		public void SetData(SignalData instance, double sampleWidth, double y_scale)
 		{
 			Instance = instance ?? throw new ArgumentNullException();
 
 			SetSignalValues(Instance.Data);
 
 			SamplingFrequency = 250.0;
-			sampleWidth = 10;
-			y_Scale = 1;
+			this.sampleWidth = sampleWidth;
+			y_Scale = y_scale;
 
 			UpdatePlot();
 		}
@@ -46,7 +48,7 @@ namespace MDP_PPG.ViewModels
 
 		private int MaxT;
 
-		private double MinBarsDist = 20.0;
+		private double MinBarsDist = 30.0;
 		private double PlotMargin = 10.0;
 
 		private double X_Min;
@@ -112,7 +114,7 @@ namespace MDP_PPG.ViewModels
 				{
 					verticalBarsCurDistance = 0.0;
 
-					var p1 = new Point(x, ymax);
+					var p1 = new Point(x, ymin);
 					var p2 = new Point(x, ymax);
 					gg.Children.Add(new LineGeometry(p1, p2));
 				}
@@ -129,6 +131,11 @@ namespace MDP_PPG.ViewModels
 			var p2 = new Point(X_Max, Y_0);
 			gg.Children.Add(new LineGeometry(p1, p2));
 
+			int deltaT_inMs = (int)(1.0 / SamplingFrequency * 1000.0);
+			TimeSpan t1 = new TimeSpan(0);
+			TimeSpan deltaT = new TimeSpan(0, 0, 0, 0, deltaT_inMs);
+			//double pixelsPerDip = VisualTreeHelper.GetDpi().PixelsPerDip;
+
 			//X bars
 			double verticalBarsCurDistance = 0.0;
 			for (double x = X_Min + PlotMargin; x <= X_Max - PlotMargin; x += sampleWidth)
@@ -142,6 +149,21 @@ namespace MDP_PPG.ViewModels
 					var dp1 = new Point(x, Y_0 - PlotMargin * 0.5);
 					var dp2 = new Point(x, Y_0 + PlotMargin * 0.5);
 					gg.Children.Add(new LineGeometry(dp1, dp2));
+
+					var text = new FormattedText(
+						t1.TotalSeconds.ToString("G2"), 
+						CultureInfo.CurrentCulture, 
+						FlowDirection.LeftToRight,
+						new Typeface("Verdana"),
+						10,
+						Brushes.Gray,
+						1.25);
+					text.MaxTextWidth = MinBarsDist;
+					text.SetFontWeight(FontWeights.UltraLight);
+					var tg = text.BuildGeometry(new Point(x, Y_0 + PlotMargin));
+					gg.Children.Add(tg);
+
+					t1 = t1 + deltaT;
 				}
 			}
 
@@ -153,51 +175,59 @@ namespace MDP_PPG.ViewModels
 
 			double ymin = Math.Min(Y_0, Y_Min);
 			double ymax = Math.Max(Y_0, Y_Max);
+			double x0 = MinBarsDist + PlotMargin;
 
 			//Y axis
-			var p1 = new Point(PlotMargin * 0.5, ymin);
-			var p2 = new Point(PlotMargin * 0.5, ymax);
+			var p1 = new Point(x0, ymin);
+			var p2 = new Point(x0, ymax);
 			gg.Children.Add(new LineGeometry(p1, p2));
 
 			//Y bars
 			for (double s = ymin + PlotMargin; s <= ymax - PlotMargin; s += MinBarsDist)
 			{
-				var dp1 = new Point(0.0, s);
-				var dp2 = new Point(PlotMargin, s);
+				var dp1 = new Point(x0 - PlotMargin * 0.5, s);
+				var dp2 = new Point(x0 + PlotMargin * 0.5, s);
 				gg.Children.Add(new LineGeometry(dp1, dp2));
+
+				var text = new FormattedText(
+					((Y_0 - s) / y_Scale).ToString("G2"),
+					CultureInfo.CurrentCulture,
+					FlowDirection.LeftToRight,
+					new Typeface("Verdana"),
+					10,
+					Brushes.Gray,
+					1.25);
+				text.MaxTextWidth = MinBarsDist;
+				text.SetFontWeight(FontWeights.UltraLight);
+				var tg = text.BuildGeometry(new Point(0.0, s));
+				gg.Children.Add(tg);
 			}
 
 			return gg;
 		}
 
-		public string Y_Scale
+		public double Y_Scale
 		{
-			get => y_Scale.ToString();
+			get => y_Scale;
 			set
 			{
-				double v = -1.0;
-				if (double.TryParse(value, out v) && v > 0)
+				if (value > 0)
 				{
-					y_Scale = v;
+					y_Scale = value;
 					UpdatePlot();
 				}
-
-				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Y_Scale)));
 			}
 		}
-		public string SampleWidth
+		public double SampleWidth
 		{
-			get => sampleWidth.ToString();
+			get => sampleWidth;
 			set
 			{
-				double v = -1.0;
-				if (double.TryParse(value, out v) && v > 0)
+				if (value > 0)
 				{
-					sampleWidth = v;
+					sampleWidth = value;
 					UpdatePlot();
 				}
-
-				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SampleWidth)));
 			}
 		}
 		public void Change_XY_Scale(int factor)
@@ -208,9 +238,6 @@ namespace MDP_PPG.ViewModels
 			y_Scale *= deltaScale;
 
 			UpdatePlot();
-
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Y_Scale)));
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SampleWidth)));
 		}
 
 		public SignalData Instance { get; private set; }

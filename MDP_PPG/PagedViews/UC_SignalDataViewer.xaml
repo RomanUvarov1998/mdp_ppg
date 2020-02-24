@@ -60,13 +60,13 @@
         <WrapPanel IsEnabled="{Binding IsInterfaceEnabled}">
             <TextBlock Text="Масштаб по времени"
                        Margin="3"/>
-            <TextBox Text="{Binding Plot.SampleWidth, UpdateSourceTrigger=PropertyChanged}"
+            <TextBox Text="{Binding SampleWidth, UpdateSourceTrigger=PropertyChanged}"
                      Width="30"
                      Margin="3,3,10,3"/>
 
             <TextBlock Text="Масштаб по величине"
                        Margin="3"/>
-            <TextBox Text="{Binding Plot.Y_Scale, UpdateSourceTrigger=PropertyChanged}"
+            <TextBox Text="{Binding Y_Scale, UpdateSourceTrigger=PropertyChanged}"
                      Width="30"
                      Margin="3,3,10,3"/>
 
@@ -119,7 +119,8 @@
 
                             <Path Data="{Binding X_Axis}" 
                                   Stroke="Black" 
-                                  StrokeThickness="2"/>
+                                  StrokeThickness="2"
+                                  SnapsToDevicePixels="True"/>
 
                         </Grid>
 

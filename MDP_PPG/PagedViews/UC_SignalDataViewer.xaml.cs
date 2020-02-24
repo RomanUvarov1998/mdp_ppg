@@ -91,7 +91,7 @@ namespace MDP_PPG.PagedViews
 			if (sd != null)
 			{
 				Plot = new SignalDataGV();
-				Plot.SetData(sd);
+				Plot.SetData(sd, sampleWidth, y_Scale);
 			}
 
 			IsLoadingData = false;
@@ -103,11 +103,11 @@ namespace MDP_PPG.PagedViews
 			ScrollViewer sv = sender as ScrollViewer;
 			if (sv == null) return;
 
-			double scaleK = 0.005;
-
 			if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))
 			{
 				Plot.Change_XY_Scale(e.Delta);
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Y_Scale)));
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SampleWidth)));
 			}
 			else if (Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift))
 			{
@@ -120,6 +120,39 @@ namespace MDP_PPG.PagedViews
 			}
 		}
 
+		public string Y_Scale
+		{
+			get => y_Scale.ToString();
+			set
+			{
+				double v = -1.0;
+				if (double.TryParse(value, out v) && v > 0)
+				{
+					y_Scale = v;
+					if (Plot != null)
+						Plot.Y_Scale = v;
+				}
+
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Y_Scale)));
+			}
+		}
+		public string SampleWidth
+		{
+			get => sampleWidth.ToString();
+			set
+			{
+				double v = -1.0;
+				if (double.TryParse(value, out v) && v > 0)
+				{
+					sampleWidth = v;
+					if (Plot != null)
+						Plot.SampleWidth = v;
+				}
+
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SampleWidth)));
+			}
+		}
+
 
 		public event PropertyChangedEventHandler PropertyChanged;
 
@@ -127,5 +160,7 @@ namespace MDP_PPG.PagedViews
 		private bool isLoadingData;
 		private SignalDataGV plot;
 		private Recording recording;
+		private double sampleWidth = 10;
+		private double y_Scale = 1;
 	}
 }
