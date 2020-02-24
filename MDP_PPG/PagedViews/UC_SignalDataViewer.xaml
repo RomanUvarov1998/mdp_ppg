@@ -57,7 +57,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <WrapPanel>
+        <WrapPanel IsEnabled="{Binding IsInterfaceEnabled}">
             <TextBlock Text="Масштаб по времени"
                        Margin="3"/>
             <TextBox Text="{Binding Plot.SampleWidth, UpdateSourceTrigger=PropertyChanged}"
@@ -68,81 +68,62 @@
                        Margin="3"/>
             <TextBox Text="{Binding Plot.Y_Scale, UpdateSourceTrigger=PropertyChanged}"
                      Width="30"
-                     Margin="3"/>
+                     Margin="3,3,10,3"/>
+
+
+            <TextBlock Text="{Binding SizeInfo}"
+                       Margin="3"/>
         </WrapPanel>
 
         <ContentControl Style="{StaticResource infoContent}"
-                        Grid.Row="1" >
+                        Grid.Row="1"
+                        SnapsToDevicePixels="True">
 
-            <ScrollViewer HorizontalScrollBarVisibility="Visible"
-                          VerticalScrollBarVisibility="Visible"
-                          HorizontalAlignment="Stretch"
-                          VerticalAlignment="Stretch"
-                          Padding="10"
-                          Background="Gainsboro">
+            <ScrollViewer VerticalScrollBarVisibility="Visible">
 
-                <Grid Background="White"
-                      Margin="10"
-                      VerticalAlignment="Center">
+                <Grid>
 
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="auto"/>
-                        <RowDefinition Height="auto"/>
-                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
 
-                    <ItemsControl ItemsSource="{Binding Plot.LineParts}"
-                                  Margin="10,10,10,0">
+                    <Grid Background="White"
+                          VerticalAlignment="Top">
 
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Grid Width="{Binding SampleWidth}">
-                                    <Line X1="0" X2="{Binding SampleWidth}" 
-                                          Y1="{Binding S1_Display}" Y2="{Binding S2_Display}" 
-                                          Stroke="Black" StrokeThickness="3"/>
-                                    <Line X1="0" X2="0" 
-                                          Y1="{Binding MinSignalValue_Display}" Y2="{Binding MaxSignalValue_Display}" 
-                                          Stroke="Gray" StrokeThickness="1"/>
-                                    <Line X1="0" X2="0" 
-                                          Y1="{Binding MinSignalValue_Display}" Y2="{Binding MaxSignalValue_Display}" 
-                                          Stroke="OrangeRed" StrokeThickness="2"
-                                          Visibility="{Binding T2_Visibility}"/>
-                                </Grid>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
+                        <Path Data="{Binding Plot.Y_Axis}"
+                              Stroke="Black"
+                              StrokeThickness="2"/>
 
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel Orientation="Horizontal"/>
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
+                    </Grid>
 
-                    </ItemsControl>
+                    <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                                  VerticalScrollBarVisibility="Hidden"
+                                  HorizontalAlignment="Stretch"
+                                  VerticalAlignment="Top"
+                                  Background="Gainsboro"
+                                  PreviewMouseWheel="ScrollViewer_MouseWheel"
+                                  Grid.Column="1">
 
-                    <ItemsControl ItemsSource="{Binding Plot.LineParts}"
-                                  Grid.Row="1"
-                                  Margin="10,0,10,10">
+                        <Grid Background="White"
+                              VerticalAlignment="Center"
+                              DataContext="{Binding Plot}">
 
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Grid Width="{Binding TimeLinePartWidth}">
-                                    <TextBlock Text="{Binding T2_Str}"
-                                               Visibility="{Binding T2_Visibility}"
-                                               Width="{Binding TimeLinePartWidth}"/>
-                                    <Line X1="0" X2="0" 
-                                          Y1="-2" Y2="15" 
-                                          Stroke="OrangeRed" StrokeThickness="2"
-                                          Visibility="{Binding T2_Visibility}"/>
-                                </Grid>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
+                            <Polyline Points="{Binding PlotPoints}"
+                                      Stroke="OrangeRed"
+                                      StrokeThickness="3"/>
 
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel Orientation="Horizontal"/>
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>  
-                        
-                    </ItemsControl>
+                            <Path Data="{Binding PlotGrid}" 
+                                  Stroke="Gray" 
+                                  StrokeThickness="1"/>
+
+                            <Path Data="{Binding X_Axis}" 
+                                  Stroke="Black" 
+                                  StrokeThickness="2"/>
+
+                        </Grid>
+
+                    </ScrollViewer>
 
                 </Grid>
 

@@ -39,8 +39,11 @@ namespace MDP_PPG.PagedViews
 			{
 				isLoadingData = value;
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsLoadingData)));
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsInterfaceEnabled)));
 			}
 		}
+		public bool IsInterfaceEnabled => !isLoadingData;
+
 		public SignalDataGV Plot
 		{
 			get => plot;
@@ -85,10 +88,38 @@ namespace MDP_PPG.PagedViews
 				sd = await context.SignalDatas.FirstOrDefaultAsync(d => d.RecordingId == recording.Id);
 			}
 
-			if (sd != null) Plot = new SignalDataGV(sd);
+			if (sd != null)
+			{
+				Plot = new SignalDataGV();
+				Plot.SetData(sd);
+			}
 
 			IsLoadingData = false;
 		}
+
+
+		private void ScrollViewer_MouseWheel(object sender, MouseWheelEventArgs e)
+		{
+			ScrollViewer sv = sender as ScrollViewer;
+			if (sv == null) return;
+
+			double scaleK = 0.005;
+
+			if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))
+			{
+				Plot.Change_XY_Scale(e.Delta);
+			}
+			else if (Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift))
+			{
+				if (e.Delta > 0)
+					sv.LineLeft();
+				else
+					sv.LineRight();
+
+				e.Handled = true;
+			}
+		}
+
 
 		public event PropertyChangedEventHandler PropertyChanged;
 
