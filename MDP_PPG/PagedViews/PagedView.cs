@@ -304,13 +304,13 @@ namespace MDP_PPG.PagedViews
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsLoadingData)));
 			RefreshButtonsIsEnabled?.Invoke();
 		}
-		public async Task RecountPages_GoToFirstPage(ModelBase updatedParent)
+		public async Task RecountPages_GoToFirstPage(ModelBase updatedParent, bool selectFirstItemIfExists)
 		{
 			_parentItem = updatedParent;
 			WhereParentExpression = GetParentFilter(_parentItem);
 			await RecountPages();
 			_pageNum = 1;
-			await LoadPageOnPageNumChanged();
+			await LoadPageOnPageNumChanged(selectFirstItemIfExists);
 			_isLoadingData = false;
 
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsLoadingData)));
@@ -382,10 +382,10 @@ namespace MDP_PPG.PagedViews
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsLoadingData)));
 			RefreshButtonsIsEnabled?.Invoke();
 		}
-		public async Task LoadPageOnPageNumChanged()
+		public async Task LoadPageOnPageNumChanged(bool selectFirstItemIfExists)
 		{
 			_itemsList = await Task.Run(() => GetItems());
-			_selectedItem = ItemsList.FirstOrDefault();
+			_selectedItem = selectFirstItemIfExists ? ItemsList.FirstOrDefault() : null;
 
 			_isLoadingData = false;
 			

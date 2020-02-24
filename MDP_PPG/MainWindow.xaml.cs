@@ -40,8 +40,8 @@ namespace MDP_PPG
 				rec_PV.Freeze();
 				pvSignalPlot.Freeze();
 
-				await pat_PV.RecountPages_GoToFirstPage(null);
-				await rec_PV.RecountPages_GoToFirstPage(pat_PV.GetSelectedItem);
+				await pat_PV.RecountPages_GoToFirstPage(null, true);
+				await rec_PV.RecountPages_GoToFirstPage(pat_PV.GetSelectedItem, false);
 				await pvSignalPlot.LoadData(rec_PV.GetSelectedItem);
 			};
 			pvPatients.PagedView.OnItemEditing = async delegate
@@ -57,7 +57,7 @@ namespace MDP_PPG
 				pvSignalPlot.Freeze();
 
 				await pat_PV.RecountPages_RefreshCurrentPage(null);
-				await rec_PV.RecountPages_GoToFirstPage(pat_PV.GetSelectedItem);
+				await rec_PV.RecountPages_GoToFirstPage(pat_PV.GetSelectedItem, false);
 				await pvSignalPlot.LoadData(rec_PV.GetSelectedItem);
 			};
 			pvPatients.PagedView.OnPageChanging = async delegate
@@ -66,8 +66,8 @@ namespace MDP_PPG
 				rec_PV.Freeze();
 				pvSignalPlot.Freeze();
 
-				await pat_PV.LoadPageOnPageNumChanged();
-				await rec_PV.RecountPages_GoToFirstPage(pat_PV.GetSelectedItem);
+				await pat_PV.LoadPageOnPageNumChanged(true);
+				await rec_PV.RecountPages_GoToFirstPage(pat_PV.GetSelectedItem, false);
 				await pvSignalPlot.LoadData(rec_PV.GetSelectedItem);
 			};
 			pvPatients.PagedView.OnFilterChanging = async delegate
@@ -76,8 +76,8 @@ namespace MDP_PPG
 				rec_PV.Freeze();
 				pvSignalPlot.Freeze();
 
-				await pat_PV.RecountPages_GoToFirstPage(null);
-				await rec_PV.RecountPages_GoToFirstPage(pat_PV.GetSelectedItem);
+				await pat_PV.RecountPages_GoToFirstPage(null, true);
+				await rec_PV.RecountPages_GoToFirstPage(pat_PV.GetSelectedItem, false);
 				await pvSignalPlot.LoadData(rec_PV.GetSelectedItem);
 			};
 			pvPatients.PagedView.OnSelectionChanged = async delegate
@@ -85,7 +85,7 @@ namespace MDP_PPG
 				rec_PV.Freeze();
 				pvSignalPlot.Freeze();
 
-				await rec_PV.RecountPages_GoToFirstPage(pat_PV.GetSelectedItem);
+				await rec_PV.RecountPages_GoToFirstPage(pat_PV.GetSelectedItem, false);
 				await pvSignalPlot.LoadData(rec_PV.GetSelectedItem);
 			};
 
@@ -97,7 +97,7 @@ namespace MDP_PPG
 				pvSignalPlot.Freeze();
 
 				await pat_PV.RefreshSelectedItem();
-				await rec_PV.RecountPages_GoToFirstPage(pat_PV.GetSelectedItem);
+				await rec_PV.RecountPages_GoToFirstPage(pat_PV.GetSelectedItem, false);
 				await pvSignalPlot.LoadData(rec_PV.GetSelectedItem);
 			};
 			pvRecordings.PagedView.OnItemEditing = async delegate
@@ -125,7 +125,7 @@ namespace MDP_PPG
 				rec_PV.Freeze();
 				pvSignalPlot.Freeze();
 
-				await rec_PV.LoadPageOnPageNumChanged();
+				await rec_PV.LoadPageOnPageNumChanged(false);
 				await pvSignalPlot.LoadData(rec_PV.GetSelectedItem);
 			};
 			pvRecordings.PagedView.OnFilterChanging = async delegate
@@ -133,7 +133,7 @@ namespace MDP_PPG
 				rec_PV.Freeze();
 				pvSignalPlot.Freeze();
 
-				await rec_PV.RecountPages_GoToFirstPage(pat_PV.GetSelectedItem);
+				await rec_PV.RecountPages_GoToFirstPage(pat_PV.GetSelectedItem, false);
 				await pvSignalPlot.LoadData(rec_PV.GetSelectedItem);
 			};
 			pvRecordings.PagedView.OnSelectionChanged = async delegate
