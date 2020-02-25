@@ -4,10 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
-using System.Text;
-using System.Timers;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Media;
 
 namespace MDP_PPG.ViewModels
