@@ -159,29 +159,10 @@ namespace MDP_PPG.PagedViews
 		{
 			svPlot.ScrollToVerticalOffset(e.VerticalOffset);
 		}
-		private bool NeedRefresh = false;
-		private double LastHorOffsetX = 0.0;
 		private void svX_ScrollChanged(object sender, ScrollChangedEventArgs e)
 		{
-			if (Mouse.LeftButton == MouseButtonState.Released)
-			{
-				TryUpdatePlot();
-				svPlot.ScrollToHorizontalOffset(e.HorizontalOffset);
-			}
-			else
-			{
-				NeedRefresh = true;
-				LastHorOffsetX = e.HorizontalOffset;
-			}
-		}
-		private void svX_PreviewMouseUp(object sender, MouseButtonEventArgs e)
-		{
-			if (NeedRefresh)
-			{
-				NeedRefresh = false;
-				TryUpdatePlot();
-				svPlot.ScrollToHorizontalOffset(LastHorOffsetX);
-			}
+			TryUpdatePlot();
+			svPlot.ScrollToHorizontalOffset(e.HorizontalOffset);
 		}
 
 		public string Y_ScaleStr

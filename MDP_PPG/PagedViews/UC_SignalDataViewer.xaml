@@ -102,7 +102,7 @@
 
                 <!-- Y Axis -->
                 <ScrollViewer Grid.Row="0" Grid.Column="0"
-                              VerticalScrollBarVisibility="Hidden"
+                              VerticalScrollBarVisibility="Visible"
                               HorizontalScrollBarVisibility="Disabled"
                               ScrollChanged="svY_ScrollChanged"
                               x:Name="svY">
@@ -152,9 +152,8 @@
                 <!-- X Axis -->
                 <ScrollViewer Grid.Row="1" Grid.Column="1"
                               VerticalScrollBarVisibility="Disabled"
-                              HorizontalScrollBarVisibility="Hidden"
+                              HorizontalScrollBarVisibility="Visible"
                               ScrollChanged="svX_ScrollChanged"
-                              PreviewMouseUp="svX_PreviewMouseUp"
                               x:Name="svX">
 
                     <Grid Background="White"
