@@ -60,18 +60,18 @@
         <WrapPanel IsEnabled="{Binding IsInterfaceEnabled}">
             <TextBlock Text="Масштаб по времени"
                        Margin="3"/>
-            <TextBox Text="{Binding SampleWidth, UpdateSourceTrigger=PropertyChanged}"
+            <TextBox Text="{Binding SampleWidthStr, UpdateSourceTrigger=PropertyChanged}"
                      Width="30"
                      Margin="3,3,10,3"/>
 
             <TextBlock Text="Масштаб по величине"
                        Margin="3"/>
-            <TextBox Text="{Binding Y_Scale, UpdateSourceTrigger=PropertyChanged}"
+            <TextBox Text="{Binding Y_ScaleStr, UpdateSourceTrigger=PropertyChanged}"
                      Width="30"
                      Margin="3,3,10,3"/>
 
 
-            <TextBlock Text="{Binding SizeInfo}"
+            <TextBlock Text="{Binding Plot.SizeInfo}"
                        Margin="3"/>
         </WrapPanel>
 
@@ -79,56 +79,83 @@
                         Grid.Row="1"
                         SnapsToDevicePixels="True">
 
-            <ScrollViewer VerticalScrollBarVisibility="Visible">
+            <Grid>
 
-                <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="auto"/>
+                </Grid.RowDefinitions>
 
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="auto"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Y Axis -->
+                <ScrollViewer Grid.Row="0" Grid.Column="0"
+                              VerticalScrollBarVisibility="Visible"
+                              HorizontalScrollBarVisibility="Disabled"
+                              ScrollChanged="svY_ScrollChanged"
+                              x:Name="svY">
 
                     <Grid Background="White"
                           VerticalAlignment="Top">
 
                         <Path Data="{Binding Plot.Y_Axis}"
                               Stroke="Black"
-                              StrokeThickness="2"/>
+                              StrokeThickness="2"
+                              SnapsToDevicePixels="True"/>
 
                     </Grid>
 
-                    <ScrollViewer HorizontalScrollBarVisibility="Auto"
-                                  VerticalScrollBarVisibility="Hidden"
-                                  HorizontalAlignment="Stretch"
-                                  VerticalAlignment="Top"
-                                  Background="Gainsboro"
-                                  PreviewMouseWheel="ScrollViewer_MouseWheel"
-                                  Grid.Column="1">
+                </ScrollViewer>
 
-                        <Grid Background="White"
-                              VerticalAlignment="Center"
-                              DataContext="{Binding Plot}">
+                <!-- Plot -->
+                <ScrollViewer Grid.Row="0" Grid.Column="1"
+                              VerticalScrollBarVisibility="Hidden"
+                              HorizontalScrollBarVisibility="Hidden"
+                              PreviewMouseWheel="Sv_Plot_PreviewMouseWheel"
+                              x:Name="svPlot">
 
-                            <Polyline Points="{Binding PlotPoints}"
-                                      Stroke="OrangeRed"
-                                      StrokeThickness="3"/>
+                    <Grid Background="White"
+                          VerticalAlignment="Top"   >
 
-                            <Path Data="{Binding PlotGrid}" 
-                                  Stroke="Gray" 
-                                  StrokeThickness="1"/>
-
-                            <Path Data="{Binding X_Axis}" 
-                                  Stroke="Black" 
-                                  StrokeThickness="2"
+                        <Polyline Points="{Binding Plot.PlotPoints}"
+                                  Stroke="OrangeRed"
+                                  StrokeThickness="3"
                                   SnapsToDevicePixels="True"/>
 
-                        </Grid>
+                        <Path Data="{Binding Plot.PlotGrid}" 
+                              Stroke="Gray" 
+                              StrokeThickness="1"
+                              SnapsToDevicePixels="True"/>
 
-                    </ScrollViewer>
+                    </Grid>
 
-                </Grid>
+                </ScrollViewer>
 
-            </ScrollViewer>
+                <!-- X Axis -->
+                <ScrollViewer Grid.Row="1" Grid.Column="1"
+                              VerticalScrollBarVisibility="Disabled"
+                              HorizontalScrollBarVisibility="Visible"
+                              ScrollChanged="svX_ScrollChanged"
+                              
+                              x:Name="svX">
+
+                    <Grid Background="White"
+                          VerticalAlignment="Center"
+                          HorizontalAlignment="Stretch">
+
+                        <Path Data="{Binding Plot.X_Axis}" 
+                              Stroke="Black" 
+                              StrokeThickness="2"
+                              SnapsToDevicePixels="True"/>
+
+                    </Grid>
+
+                </ScrollViewer>
+
+            </Grid>
 
         </ContentControl>
 

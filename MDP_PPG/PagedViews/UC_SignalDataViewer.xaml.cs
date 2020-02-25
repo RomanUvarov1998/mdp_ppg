@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
@@ -30,6 +31,9 @@ namespace MDP_PPG.PagedViews
 			InitializeComponent();
 
 			DataContext = this;
+
+			SampleWidthStr = "10";
+			Y_ScaleStr = "1";
 		}
 
 		public bool IsLoadingData
@@ -51,6 +55,8 @@ namespace MDP_PPG.PagedViews
 			{
 				plot = value;
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Plot)));
+				svX.ScrollToLeftEnd();
+				svY.ScrollToBottom();
 			}
 		}
 		public Recording Recording
@@ -91,65 +97,85 @@ namespace MDP_PPG.PagedViews
 			if (sd != null)
 			{
 				Plot = new SignalDataGV();
-				Plot.SetData(sd, sampleWidth, y_Scale);
+				Plot.SetData(sd, SampleWidthGlobal, Y_ScaleGlobal);
 			}
 
 			IsLoadingData = false;
 		}
 
-
-		private void ScrollViewer_MouseWheel(object sender, MouseWheelEventArgs e)
+		private void Sv_Plot_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
 		{
-			ScrollViewer sv = sender as ScrollViewer;
-			if (sv == null) return;
+			if (Plot == null) return;
 
 			if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))
 			{
 				Plot.Change_XY_Scale(e.Delta);
-				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Y_Scale)));
-				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SampleWidth)));
+
+				Y_ScaleStr = Plot.Y_Scale.ToString();
+				SampleWidthStr = Plot.SampleWidth.ToString();
 			}
 			else if (Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift))
 			{
 				if (e.Delta > 0)
-					sv.LineLeft();
+					svX.LineLeft();
 				else
-					sv.LineRight();
+					svX.LineRight();
+
+				e.Handled = true;
+			}
+			else
+			{
+				if (e.Delta > 0)
+					svY.LineUp();
+				else
+					svY.LineDown();
 
 				e.Handled = true;
 			}
 		}
-
-		public string Y_Scale
+		private void svY_ScrollChanged(object sender, ScrollChangedEventArgs e)
 		{
-			get => y_Scale.ToString();
+			svPlot.ScrollToVerticalOffset(e.VerticalOffset);
+		}
+		private void svX_ScrollChanged(object sender, ScrollChangedEventArgs e)
+		{
+			svPlot.ScrollToHorizontalOffset(e.HorizontalOffset);
+		}
+
+		public string Y_ScaleStr
+		{
+			get => y_ScaleStr;
 			set
 			{
+				y_ScaleStr = value;
+
 				double v = -1.0;
 				if (double.TryParse(value, out v) && v > 0)
 				{
-					y_Scale = v;
+					Y_ScaleGlobal = v;
 					if (Plot != null)
-						Plot.Y_Scale = v;
+						Plot.Y_Scale = Y_ScaleGlobal;
 				}
 
-				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Y_Scale)));
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Y_ScaleStr)));
 			}
 		}
-		public string SampleWidth
+		public string SampleWidthStr
 		{
-			get => sampleWidth.ToString();
+			get => sampleWidthStr;
 			set
 			{
+				sampleWidthStr = value;
+
 				double v = -1.0;
 				if (double.TryParse(value, out v) && v > 0)
 				{
-					sampleWidth = v;
+					SampleWidthGlobal = v;
 					if (Plot != null)
-						Plot.SampleWidth = v;
+						Plot.SampleWidth = SampleWidthGlobal;
 				}
 
-				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SampleWidth)));
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SampleWidthStr)));
 			}
 		}
 
@@ -160,7 +186,9 @@ namespace MDP_PPG.PagedViews
 		private bool isLoadingData;
 		private SignalDataGV plot;
 		private Recording recording;
-		private double sampleWidth = 10;
-		private double y_Scale = 1;
+		private string sampleWidthStr;
+		private string y_ScaleStr;
+		private double SampleWidthGlobal;
+		private double Y_ScaleGlobal;
 	}
 }

@@ -37,14 +37,12 @@ namespace MDP_PPG.ViewModels
 			SignalValues = data.Select(_byte => (double)_byte).ToArray();
 			MinSignalValue = SignalValues.Min();
 			MaxSignalValue = SignalValues.Max();
-			Y_Range = Math.Abs(MaxSignalValue - MinSignalValue);
 
 			MaxT = SignalValues.Length;
 		}
 		private double[] SignalValues;
 		private double MinSignalValue;
 		private double MaxSignalValue;
-		private double Y_Range;
 
 		private int MaxT;
 
@@ -65,33 +63,28 @@ namespace MDP_PPG.ViewModels
 			Y_Max = MaxSignalValue * y_Scale + PlotMargin;
 			Y_0 = Y_Max - PlotMargin + MinSignalValue * y_Scale;
 
-			PlotPoints = GetPlotPoints();
-			PlotGrid = GetGrid();
-			Y_Axis = Get_Y_Axis();
-			X_Axis = Get_X_Axis();
-
-			PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(PlotPoints)));
-			PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(PlotGrid)));
-			PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(Y_Axis)));
-			PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(X_Axis)));
+			Refresh_PlotPoints();
+			Refresh_Grid();
+			Refresh_Y_Axis();
+			Refresh_X_Axis();
 		}
-		private PointCollection GetPlotPoints()
+		private void Refresh_PlotPoints()
 		{
-			var pc = new PointCollection();
+			PlotPoints = new PointCollection();
 
 			for (int x = 0; x < SignalValues.Length; ++x)
 			{
 				var ps = new Point(
 					X_Min + PlotMargin + x * sampleWidth,
 					Y_Max - PlotMargin - (SignalValues[x] - MinSignalValue) * y_Scale);
-				pc.Add(ps);
+				PlotPoints.Add(ps);
 			}
 
-			return pc;
+			PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(PlotPoints)));
 		}
-		private GeometryGroup GetGrid()
+		private void Refresh_Grid()
 		{
-			var gg = new GeometryGroup();
+			PlotGrid = new GeometryGroup();
 
 			double ymin = Math.Min(Y_0, Y_Min);
 			double ymax = Math.Max(Y_0, Y_Max);
@@ -101,7 +94,7 @@ namespace MDP_PPG.ViewModels
 			{
 				var p1 = new Point(X_Min, s);
 				var p2 = new Point(X_Max, s);
-				gg.Children.Add(new LineGeometry(p1, p2));
+				PlotGrid.Children.Add(new LineGeometry(p1, p2));
 			}
 
 			//vertical grid
@@ -116,20 +109,24 @@ namespace MDP_PPG.ViewModels
 
 					var p1 = new Point(x, ymin);
 					var p2 = new Point(x, ymax);
-					gg.Children.Add(new LineGeometry(p1, p2));
+					PlotGrid.Children.Add(new LineGeometry(p1, p2));
 				}
 			}
 
-			return gg;
+			PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(PlotGrid)));
 		}
-		private GeometryGroup Get_X_Axis()
+		private void Refresh_X_Axis()
 		{
-			var gg = new GeometryGroup();
+			X_Axis = new GeometryGroup();
+
+			double yA = PlotMargin * 0.5;
+			double yTop = 0.0;
+			double yBottom = PlotMargin;
 
 			//X axis
-			var p1 = new Point(X_Min, Y_0);
-			var p2 = new Point(X_Max, Y_0);
-			gg.Children.Add(new LineGeometry(p1, p2));
+			var p1 = new Point(X_Min, yA);
+			var p2 = new Point(X_Max, yA);
+			X_Axis.Children.Add(new LineGeometry(p1, p2));
 
 			int deltaT_inMs = (int)(1.0 / SamplingFrequency * 1000.0);
 			TimeSpan t1 = new TimeSpan(0);
@@ -146,65 +143,77 @@ namespace MDP_PPG.ViewModels
 				{
 					verticalBarsCurDistance = 0.0;
 
-					var dp1 = new Point(x, Y_0 - PlotMargin * 0.5);
-					var dp2 = new Point(x, Y_0 + PlotMargin * 0.5);
-					gg.Children.Add(new LineGeometry(dp1, dp2));
+					var dp1 = new Point(x, yTop);
+					var dp2 = new Point(x, yBottom);
+					X_Axis.Children.Add(new LineGeometry(dp1, dp2));
 
-					var text = new FormattedText(
-						t1.TotalSeconds.ToString("G2"), 
-						CultureInfo.CurrentCulture, 
-						FlowDirection.LeftToRight,
-						new Typeface("Verdana"),
-						10,
-						Brushes.Gray,
-						1.25);
+					var text = GetTextField(t1.TotalSeconds);
 					text.MaxTextWidth = MinBarsDist;
 					text.SetFontWeight(FontWeights.UltraLight);
-					var tg = text.BuildGeometry(new Point(x, Y_0 + PlotMargin));
-					gg.Children.Add(tg);
-
-					t1 = t1 + deltaT;
+					var tg = text.BuildGeometry(new Point(x, yBottom));
+					X_Axis.Children.Add(tg);
 				}
+
+				t1 = t1 + deltaT;
 			}
 
-			return gg;
+			PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(X_Axis)));
 		}
-		private GeometryGroup Get_Y_Axis()
+		private void Refresh_Y_Axis()
 		{
-			var gg = new GeometryGroup(); ;
+			Y_Axis = new GeometryGroup();
 
 			double ymin = Math.Min(Y_0, Y_Min);
 			double ymax = Math.Max(Y_0, Y_Max);
-			double x0 = MinBarsDist + PlotMargin;
+
+			int textsCount = (int)((ymax - ymin) / MinBarsDist);
+
+			FormattedText[] texts = new FormattedText[textsCount];
+			double[] textsYs = new double[textsCount];
+
+			//Y bars
+			for (int i = 0; i < textsCount; ++i)
+			{
+				double s = ymin + PlotMargin + i * MinBarsDist;
+
+				var text = GetTextField((Y_0 - s) / y_Scale);
+				text.SetFontWeight(FontWeights.UltraLight);
+
+				textsYs[i] = s;
+				texts[i] = text;
+			}
+
+			double x0 = PlotMargin + texts.Max(t => t.Width) + PlotMargin * 0.5;
 
 			//Y axis
 			var p1 = new Point(x0, ymin);
 			var p2 = new Point(x0, ymax);
-			gg.Children.Add(new LineGeometry(p1, p2));
+			Y_Axis.Children.Add(new LineGeometry(p1, p2));
 
-			//Y bars
-			for (double s = ymin + PlotMargin; s <= ymax - PlotMargin; s += MinBarsDist)
+			for (int i = 0; i < textsCount; ++i)
 			{
-				var dp1 = new Point(x0 - PlotMargin * 0.5, s);
-				var dp2 = new Point(x0 + PlotMargin * 0.5, s);
-				gg.Children.Add(new LineGeometry(dp1, dp2));
+				var textOrigin = new Point(x0 - texts[i].Width - PlotMargin * 0.5, textsYs[i]);
+				var tg = texts[i].BuildGeometry(textOrigin);
 
-				var text = new FormattedText(
-					((Y_0 - s) / y_Scale).ToString("G2"),
-					CultureInfo.CurrentCulture,
-					FlowDirection.LeftToRight,
-					new Typeface("Verdana"),
-					10,
-					Brushes.Gray,
-					1.25);
-				text.MaxTextWidth = MinBarsDist;
-				text.SetFontWeight(FontWeights.UltraLight);
-				var tg = text.BuildGeometry(new Point(0.0, s));
-				gg.Children.Add(tg);
+				var dp1 = new Point(x0 - PlotMargin * 0.5, textsYs[i]);
+				var dp2 = new Point(x0 + PlotMargin * 0.5, textsYs[i]);
+				Y_Axis.Children.Add(new LineGeometry(dp1, dp2));
+
+				Y_Axis.Children.Add(tg);
 			}
 
-			return gg;
+			PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(Y_Axis)));
 		}
+		private string MyDoubleToString(double d) => d.ToString("E02");
+		private FormattedText GetTextField(double value) => 
+			new FormattedText(
+				MyDoubleToString(value),
+				CultureInfo.CurrentCulture,
+				FlowDirection.LeftToRight,
+				new Typeface("Verdana"),
+				10,
+				Brushes.Gray,
+				1.25);
 
 		public double Y_Scale
 		{
@@ -242,12 +251,12 @@ namespace MDP_PPG.ViewModels
 
 		public SignalData Instance { get; private set; }
 
-		public string SizeInfo => $"Размер {Instance.Data.Length} байт";
+		public string SizeInfo => Instance?.Data == null ? string.Empty : $"Размер {Instance.Data.Length} байт";
 
 		public PointCollection PlotPoints { get; set; } = new PointCollection();
 		public GeometryGroup PlotGrid { get; set; } = new GeometryGroup();
-		public GeometryGroup Y_Axis { get; set; } = new GeometryGroup();
 		public GeometryGroup X_Axis { get; set; } = new GeometryGroup();
+		public GeometryGroup Y_Axis { get; set; } = new GeometryGroup();
 
 
 		public event PropertyChangedEventHandler PropertyChanged;

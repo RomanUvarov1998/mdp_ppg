@@ -36,7 +36,7 @@ namespace MDP_PPG.PagedViews
 				},
 				query => query.OrderByDescending(rec => rec.CreatedDate),
 				curItem => (item => DbFunctions.DiffDays(item.CreatedDate, curItem.CreatedDate) <= 0),
-				query => query);
+				query => query.Include(r => r.SignalData));
 
 			DataContext = this;
 		}
