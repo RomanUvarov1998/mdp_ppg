@@ -102,6 +102,7 @@
     <Compile Include="ViewModels\IViewModel.cs" />
     <Compile Include="ViewModels\PatientTVM.cs" />
     <Compile Include="ViewModels\RecordingTVM.cs" />
+    <Compile Include="ViewModels\SignalContainer.cs" />
     <Compile Include="ViewModels\SignalDataGV.cs" />
     <Page Include="EntitiesEditing\UC_EditPatient.xaml">
       <SubType>Designer</SubType>

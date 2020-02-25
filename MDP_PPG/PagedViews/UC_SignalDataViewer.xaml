@@ -132,15 +132,15 @@
                         <TextBlock Text="{Binding X_Value, StringFormat='X = {0}'}"/>
                         <TextBlock Text="{Binding Y_Value, StringFormat='Y = {0}'}"/>
                         <TextBlock Text="{Binding PlotRect}"/>
-                    </StackPanel>
-                    
-                    <!--<Polyline Points="{Binding Plot.PlotPoints}"
+                        <Polyline Points="{Binding Plot.PlotPoints}"
                                   Stroke="OrangeRed"
                                   StrokeThickness="3"
                                   SnapsToDevicePixels="True"
                                   HorizontalAlignment="Left"
                                   x:Name="plotGraph"/>
-                    <Path Data="{Binding Plot.PlotGrid}" 
+                    </StackPanel>
+                    
+                    <!--<Path Data="{Binding Plot.PlotGrid}" 
                               Stroke="Gray" 
                               StrokeThickness="1"
                               SnapsToDevicePixels="True"

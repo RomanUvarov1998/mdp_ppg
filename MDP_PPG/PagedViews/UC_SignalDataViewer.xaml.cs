@@ -32,7 +32,7 @@ namespace MDP_PPG.PagedViews
 
 			DataContext = this;
 
-			SampleWidthStr = "10";
+			SampleWidthStr = "100";
 			Y_ScaleStr = "1";
 
 			Min_X = 0;
@@ -121,11 +121,13 @@ namespace MDP_PPG.PagedViews
 		private void sbX_Scroll(object sender, ScrollEventArgs e)
 		{
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(X_Value)));
+			TryUpdatePlot();
 		}
 
 		private void sbY_Scroll(object sender, ScrollEventArgs e)
 		{
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Y_Value)));
+			TryUpdatePlot();
 		}
 
 		public void Freeze()
@@ -151,11 +153,14 @@ namespace MDP_PPG.PagedViews
 				sd = await context.SignalDatas.FirstOrDefaultAsync(d => d.RecordingId == recording.Id);
 			}
 
-			//if (sd != null)
-			//{
-			//	Plot = new SignalDataGV();
-			//	Dispatcher.Invoke(delegate { Plot.SetData(sd, SampleWidthGlobal, Y_ScaleGlobal, 0.0, svPlot.ActualWidth); });
-			//}
+			if (sd != null)
+			{
+				Dispatcher.Invoke(delegate {
+					Plot = new SignalDataGV();
+					Plot.SetData(sd, CurrentScale, RectWindow);
+					TryUpdateScrollBars();
+				});
+			}
 
 			IsLoadingData = false;
 		}
@@ -163,25 +168,21 @@ namespace MDP_PPG.PagedViews
 		public void OnWindowResized()
 		{
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PlotRect)));
-			//TryUpdatePlot();
+			TryUpdatePlot();
 		}
-		//private void TryUpdatePlot()
-		//{
-		//	if (Plot != null)
-		//	{
-		//		double leftBorder = svPlot.HorizontalOffset;
-		//		double rightBorder = svPlot.HorizontalOffset + svPlot.ActualWidth;
+		private void TryUpdatePlot()
+		{
+			if (Plot == null) return;
 
-		//		svY.ScrollChanged -= svY_ScrollChanged;
-		//		svX.ScrollChanged -= svX_ScrollChanged;
+			Plot.UpdatePlot(RectWindow, CurrentScale);
+		}
+		private void TryUpdateScrollBars()
+		{
+			if (Plot == null) return;
 
-		//		Plot.UpdatePlot(leftBorder, rightBorder);
-		//		var w = plotGraph.ActualWidth;
-
-		//		svY.ScrollChanged += svY_ScrollChanged;
-		//		svX.ScrollChanged += svX_ScrollChanged;
-		//	}
-		//}
+			Max_X = Plot.SignalContainer.X_Range * SampleWidthGlobal;
+			Max_Y = Plot.SignalContainer.Y_Range * Y_ScaleGlobal;
+		}
 
 		//private void Sv_Plot_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
 		//{
@@ -223,6 +224,9 @@ namespace MDP_PPG.PagedViews
 		//	svPlot.ScrollToHorizontalOffset(e.HorizontalOffset);
 		//}
 
+		private Size CurrentScale => new Size(SampleWidthGlobal, Y_ScaleGlobal);
+		private Rect RectWindow => new Rect(sbX.Value, sbY.Value, plotGrid.ActualWidth, plotGrid.ActualHeight);
+
 		public string Y_ScaleStr
 		{
 			get => y_ScaleStr;
@@ -236,6 +240,7 @@ namespace MDP_PPG.PagedViews
 					Y_ScaleGlobal = v;
 					if (Plot != null)
 						Plot.SetYScale(Y_ScaleGlobal);
+					TryUpdateScrollBars();
 				}
 
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Y_ScaleStr)));
@@ -254,6 +259,7 @@ namespace MDP_PPG.PagedViews
 					SampleWidthGlobal = v;
 					if (Plot != null)
 						Plot.SetXScale(SampleWidthGlobal);
+					TryUpdateScrollBars();
 				}
 
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SampleWidthStr)));
