@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -17,20 +18,26 @@ namespace MDP_PPG.ViewModels
 		{
 
 		}
-		public void SetData(SignalData instance, double sampleWidth, double y_scale)
+		public void SetData(SignalData instance, double sampleWidth, double y_scale,
+			double leftBorder, double rightBorder)
 		{
 			Instance = instance ?? throw new ArgumentNullException();
 
 			SetSignalValues(Instance.Data);
 
 			SamplingFrequency = 250.0;
+			SamplingPeriod = 1.0 / SamplingFrequency;
+
 			this.sampleWidth = sampleWidth;
 			y_Scale = y_scale;
 
-			UpdatePlot();
+			UpdatePlot(leftBorder, rightBorder);
+
+			PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(SizeInfo)));
 		}
 
 		private double SamplingFrequency;
+		private double SamplingPeriod;
 
 		private void SetSignalValues(byte[] data)
 		{
@@ -41,6 +48,10 @@ namespace MDP_PPG.ViewModels
 			MaxT = SignalValues.Length;
 		}
 		private double[] SignalValues;
+
+		private double LeftBorder;
+		private double RightBorder;
+
 		private double MinSignalValue;
 		private double MaxSignalValue;
 
@@ -55,69 +66,54 @@ namespace MDP_PPG.ViewModels
 		private double Y_Max;
 		private double Y_0;
 
-		private void UpdatePlot()
+		public void UpdatePlot(double leftBorder, double rightBorder)
 		{
+			LeftBorder = leftBorder;
+			RightBorder = rightBorder;
+
 			X_Min = 0.0;
 			X_Max = PlotMargin * 2 + MaxT * sampleWidth;
 			Y_Min = MinSignalValue * y_Scale - PlotMargin;
 			Y_Max = MaxSignalValue * y_Scale + PlotMargin;
 			Y_0 = Y_Max - PlotMargin + MinSignalValue * y_Scale;
 
-			Refresh_PlotPoints();
-			Refresh_Grid();
 			Refresh_Y_Axis();
 			Refresh_X_Axis();
+			Refresh_Grid();
+			Refresh_PlotPoints();
 		}
 		private void Refresh_PlotPoints()
 		{
 			PlotPoints = new PointCollection();
 
-			for (int x = 0; x < SignalValues.Length; ++x)
+			double left = LeftBorder, right = RightBorder;
+			double xmin = X_Min;
+			double ymax = Y_Max;
+			double xCount = SignalValues.Length;
+			double plotMargin = PlotMargin;
+			double smin = MinSignalValue;
+			double yScale = y_Scale;
+			double sampWidth = sampleWidth;
+
+			for (int x = 0; x < xCount; ++x)
 			{
-				var ps = new Point(
-					X_Min + PlotMargin + x * sampleWidth,
-					Y_Max - PlotMargin - (SignalValues[x] - MinSignalValue) * y_Scale);
-				PlotPoints.Add(ps);
+				double pointX = xmin + plotMargin + x * sampWidth;
+
+				if (pointX >= left && pointX <= right)
+				{
+					var ps = new Point(
+						pointX,
+						ymax - plotMargin - (SignalValues[x] - smin) * yScale);
+					PlotPoints.Add(ps);
+				}
 			}
 
 			PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(PlotPoints)));
 		}
-		private void Refresh_Grid()
-		{
-			PlotGrid = new GeometryGroup();
-
-			double ymin = Math.Min(Y_0, Y_Min);
-			double ymax = Math.Max(Y_0, Y_Max);
-
-			//horizontal grid
-			for (double s = ymin + PlotMargin; s <= ymax - PlotMargin; s += MinBarsDist)
-			{
-				var p1 = new Point(X_Min, s);
-				var p2 = new Point(X_Max, s);
-				PlotGrid.Children.Add(new LineGeometry(p1, p2));
-			}
-
-			//vertical grid
-			double verticalBarsCurDistance = 0.0;
-			for (double x = X_Min + PlotMargin; x <= X_Max - PlotMargin; x += sampleWidth)
-			{
-				verticalBarsCurDistance += sampleWidth;
-
-				if (verticalBarsCurDistance > MinBarsDist || x < X_Min + PlotMargin + sampleWidth)
-				{
-					verticalBarsCurDistance = 0.0;
-
-					var p1 = new Point(x, ymin);
-					var p2 = new Point(x, ymax);
-					PlotGrid.Children.Add(new LineGeometry(p1, p2));
-				}
-			}
-
-			PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(PlotGrid)));
-		}
 		private void Refresh_X_Axis()
 		{
 			X_Axis = new GeometryGroup();
+			VertBarsPoss.Clear();
 
 			double yA = PlotMargin * 0.5;
 			double yTop = 0.0;
@@ -131,37 +127,48 @@ namespace MDP_PPG.ViewModels
 			int deltaT_inMs = (int)(1.0 / SamplingFrequency * 1000.0);
 			TimeSpan t1 = new TimeSpan(0);
 			TimeSpan deltaT = new TimeSpan(0, 0, 0, 0, deltaT_inMs);
-			//double pixelsPerDip = VisualTreeHelper.GetDpi().PixelsPerDip;
 
 			//X bars
 			double verticalBarsCurDistance = 0.0;
-			for (double x = X_Min + PlotMargin; x <= X_Max - PlotMargin; x += sampleWidth)
+			double xCount = SignalValues.Length;
+			double xmin = X_Min;
+			double plotMargin = PlotMargin;
+			double deltaX = sampleWidth;
+			double minBarsDist = MinBarsDist;
+			double left = LeftBorder, right = RightBorder;
+			double zeroBarDist = X_Min + PlotMargin + deltaX;
+			for (int x = 0; x <= xCount; ++x)
 			{
-				verticalBarsCurDistance += sampleWidth;
+				double pointX = xmin + plotMargin + x * deltaX;
+				if (pointX >= left && pointX <= right)
+					if (verticalBarsCurDistance > minBarsDist || pointX < zeroBarDist)
+					{
+						verticalBarsCurDistance = 0.0;
 
-				if (verticalBarsCurDistance > MinBarsDist || x < X_Min + PlotMargin + sampleWidth)
-				{
-					verticalBarsCurDistance = 0.0;
+						var dp1 = new Point(pointX, yTop);
+						var dp2 = new Point(pointX, yBottom);
+						X_Axis.Children.Add(new LineGeometry(dp1, dp2));
 
-					var dp1 = new Point(x, yTop);
-					var dp2 = new Point(x, yBottom);
-					X_Axis.Children.Add(new LineGeometry(dp1, dp2));
+						var text = GetTextField(t1.TotalSeconds);
+						text.MaxTextWidth = minBarsDist;
+						text.SetFontWeight(FontWeights.UltraLight);
+						var tg = text.BuildGeometry(new Point(pointX, yBottom));
+						X_Axis.Children.Add(tg);
 
-					var text = GetTextField(t1.TotalSeconds);
-					text.MaxTextWidth = MinBarsDist;
-					text.SetFontWeight(FontWeights.UltraLight);
-					var tg = text.BuildGeometry(new Point(x, yBottom));
-					X_Axis.Children.Add(tg);
-				}
+						VertBarsPoss.Add(pointX);
+					}
 
+				verticalBarsCurDistance += deltaX;
 				t1 = t1 + deltaT;
 			}
 
 			PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(X_Axis)));
 		}
+		private List<double> VertBarsPoss = new List<double>();
 		private void Refresh_Y_Axis()
 		{
 			Y_Axis = new GeometryGroup();
+			HorzBarsPoss.Clear();
 
 			double ymin = Math.Min(Y_0, Y_Min);
 			double ymax = Math.Max(Y_0, Y_Max);
@@ -181,9 +188,12 @@ namespace MDP_PPG.ViewModels
 
 				textsYs[i] = s;
 				texts[i] = text;
+
+				HorzBarsPoss.Add(s);
 			}
 
-			double x0 = PlotMargin + texts.Max(t => t.Width) + PlotMargin * 0.5;
+			double maxTextWidth = texts.Length > 0 ? texts.Max(t => t.Width) : 0.0;
+			double x0 = PlotMargin + maxTextWidth + PlotMargin * 0.5;
 
 			//Y axis
 			var p1 = new Point(x0, ymin);
@@ -204,10 +214,47 @@ namespace MDP_PPG.ViewModels
 
 			PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(Y_Axis)));
 		}
-		private string MyDoubleToString(double d) => d.ToString("E02");
-		private FormattedText GetTextField(double value) => 
+		private List<double> HorzBarsPoss = new List<double>();
+		private void Refresh_Grid()
+		{
+			PlotGrid = new GeometryGroup();
+
+			double ymin = Math.Min(Y_0, Y_Min);
+			double ymax = Math.Max(Y_0, Y_Max);
+			double xmin = X_Min;
+			double xmax = X_Max;
+
+			//horizontal grid
+			foreach (var y in HorzBarsPoss)
+			{
+				var p1 = new Point(xmin, y);
+				var p2 = new Point(xmax, y);
+				PlotGrid.Children.Add(new LineGeometry(p1, p2));
+			}
+
+			//vertical grid
+			foreach (var x in VertBarsPoss)
+			{
+				var p1 = new Point(x, ymin);
+				var p2 = new Point(x, ymax);
+				PlotGrid.Children.Add(new LineGeometry(p1, p2));
+			}
+
+			PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(PlotGrid)));
+		}
+		public string OnMouseMove(Point mousePosition)
+		{
+			double tValue = (mousePosition.X - X_Min) / sampleWidth * SamplingPeriod;
+			double sValue = (Y_0 - mousePosition.Y) / y_Scale;
+
+			return $"{tValue.ToString("G4")} с, {sValue.ToString("G4")}";
+		}
+
+		private string MyDoubleToString(double d) => d.ToString("G04");
+		private FormattedText GetTextField(double value) => GetTextField(MyDoubleToString(value));
+		private FormattedText GetTextField(string text) =>
 			new FormattedText(
-				MyDoubleToString(value),
+				text,
 				CultureInfo.CurrentCulture,
 				FlowDirection.LeftToRight,
 				new Typeface("Verdana"),
@@ -215,29 +262,15 @@ namespace MDP_PPG.ViewModels
 				Brushes.Gray,
 				1.25);
 
-		public double Y_Scale
+		public void SetYScale(double newValue)
 		{
-			get => y_Scale;
-			set
-			{
-				if (value > 0)
-				{
-					y_Scale = value;
-					UpdatePlot();
-				}
-			}
+			y_Scale = newValue;
+			UpdatePlot(LeftBorder, RightBorder);
 		}
-		public double SampleWidth
+		public void SetXScale(double newValue)
 		{
-			get => sampleWidth;
-			set
-			{
-				if (value > 0)
-				{
-					sampleWidth = value;
-					UpdatePlot();
-				}
-			}
+			sampleWidth = newValue;
+			UpdatePlot(LeftBorder, RightBorder);
 		}
 		public void Change_XY_Scale(int factor)
 		{
@@ -246,12 +279,12 @@ namespace MDP_PPG.ViewModels
 			sampleWidth *= deltaScale;
 			y_Scale *= deltaScale;
 
-			UpdatePlot();
+			UpdatePlot(LeftBorder, RightBorder);
 		}
 
 		public SignalData Instance { get; private set; }
 
-		public string SizeInfo => Instance?.Data == null ? string.Empty : $"Размер {Instance.Data.Length} байт";
+		public string SizeInfo => Instance?.Data == null ? string.Empty : $"Размер {Instance.Data.Length.ToString("N")} байт";
 
 		public PointCollection PlotPoints { get; set; } = new PointCollection();
 		public GeometryGroup PlotGrid { get; set; } = new GeometryGroup();

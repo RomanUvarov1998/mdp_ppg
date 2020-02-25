@@ -97,10 +97,32 @@ namespace MDP_PPG.PagedViews
 			if (sd != null)
 			{
 				Plot = new SignalDataGV();
-				Plot.SetData(sd, SampleWidthGlobal, Y_ScaleGlobal);
+				Dispatcher.Invoke(delegate { Plot.SetData(sd, SampleWidthGlobal, Y_ScaleGlobal, 0.0, svPlot.ActualWidth); });
 			}
 
 			IsLoadingData = false;
+		}
+
+		public void OnWindowResized()
+		{
+			TryUpdatePlot();
+		}
+		private void TryUpdatePlot()
+		{
+			if (Plot != null)
+			{
+				double leftBorder = svPlot.HorizontalOffset;
+				double rightBorder = svPlot.HorizontalOffset + svPlot.ActualWidth;
+
+				svY.ScrollChanged -= svY_ScrollChanged;
+				svX.ScrollChanged -= svX_ScrollChanged;
+
+				Plot.UpdatePlot(leftBorder, rightBorder);
+				var w = plotGraph.ActualWidth;
+
+				svY.ScrollChanged += svY_ScrollChanged;
+				svX.ScrollChanged += svX_ScrollChanged;
+			}
 		}
 
 		private void Sv_Plot_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
@@ -111,8 +133,8 @@ namespace MDP_PPG.PagedViews
 			{
 				Plot.Change_XY_Scale(e.Delta);
 
-				Y_ScaleStr = Plot.Y_Scale.ToString();
-				SampleWidthStr = Plot.SampleWidth.ToString();
+				//Y_ScaleStr = Plot.Y_Scale.ToString();
+				//SampleWidthStr = Plot.SampleWidth.ToString();
 			}
 			else if (Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift))
 			{
@@ -137,9 +159,29 @@ namespace MDP_PPG.PagedViews
 		{
 			svPlot.ScrollToVerticalOffset(e.VerticalOffset);
 		}
+		private bool NeedRefresh = false;
+		private double LastHorOffsetX = 0.0;
 		private void svX_ScrollChanged(object sender, ScrollChangedEventArgs e)
 		{
-			svPlot.ScrollToHorizontalOffset(e.HorizontalOffset);
+			if (Mouse.LeftButton == MouseButtonState.Released)
+			{
+				TryUpdatePlot();
+				svPlot.ScrollToHorizontalOffset(e.HorizontalOffset);
+			}
+			else
+			{
+				NeedRefresh = true;
+				LastHorOffsetX = e.HorizontalOffset;
+			}
+		}
+		private void svX_PreviewMouseUp(object sender, MouseButtonEventArgs e)
+		{
+			if (NeedRefresh)
+			{
+				NeedRefresh = false;
+				TryUpdatePlot();
+				svPlot.ScrollToHorizontalOffset(LastHorOffsetX);
+			}
 		}
 
 		public string Y_ScaleStr
@@ -154,7 +196,7 @@ namespace MDP_PPG.PagedViews
 				{
 					Y_ScaleGlobal = v;
 					if (Plot != null)
-						Plot.Y_Scale = Y_ScaleGlobal;
+						Plot.SetYScale(Y_ScaleGlobal);
 				}
 
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Y_ScaleStr)));
@@ -172,11 +214,33 @@ namespace MDP_PPG.PagedViews
 				{
 					SampleWidthGlobal = v;
 					if (Plot != null)
-						Plot.SampleWidth = SampleWidthGlobal;
+						Plot.SetXScale(SampleWidthGlobal);
 				}
 
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SampleWidthStr)));
 			}
+		}
+
+		public string MousePos
+		{
+			get => mousePos;
+			set
+			{
+				mousePos = value;
+				PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(MousePos)));
+			}
+		}
+		private void Plot_MouseMove(object sender, MouseEventArgs e)
+		{
+			if (Plot == null) return;
+
+			var p = e.GetPosition(plotGrid);
+
+			MousePos = Plot.OnMouseMove(p);
+		}
+		private void Plot_MouseLeave(object sender, MouseEventArgs e)
+		{
+			MousePos = string.Empty;
 		}
 
 
@@ -190,5 +254,6 @@ namespace MDP_PPG.PagedViews
 		private string y_ScaleStr;
 		private double SampleWidthGlobal;
 		private double Y_ScaleGlobal;
+		private string mousePos;
 	}
 }

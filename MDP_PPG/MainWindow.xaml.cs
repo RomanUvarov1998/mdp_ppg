@@ -145,5 +145,10 @@ namespace MDP_PPG
 
 			pvPatients.DoFilteredSearch();
 		}
+
+		private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
+		{
+			pvSignalPlot.OnWindowResized();
+		}
 	}
 }

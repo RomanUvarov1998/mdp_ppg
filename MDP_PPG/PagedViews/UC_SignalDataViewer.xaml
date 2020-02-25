@@ -73,6 +73,15 @@
 
             <TextBlock Text="{Binding Plot.SizeInfo}"
                        Margin="3"/>
+
+
+            <Border BorderThickness="2"
+                    BorderBrush="LightGray">
+
+                <TextBlock Text="{Binding MousePos}"
+                       Margin="3"/>
+
+            </Border>
         </WrapPanel>
 
         <ContentControl Style="{StaticResource infoContent}"
@@ -93,13 +102,13 @@
 
                 <!-- Y Axis -->
                 <ScrollViewer Grid.Row="0" Grid.Column="0"
-                              VerticalScrollBarVisibility="Visible"
+                              VerticalScrollBarVisibility="Hidden"
                               HorizontalScrollBarVisibility="Disabled"
                               ScrollChanged="svY_ScrollChanged"
                               x:Name="svY">
 
                     <Grid Background="White"
-                          VerticalAlignment="Top">
+                          VerticalAlignment="Bottom">
 
                         <Path Data="{Binding Plot.Y_Axis}"
                               Stroke="Black"
@@ -115,20 +124,26 @@
                               VerticalScrollBarVisibility="Hidden"
                               HorizontalScrollBarVisibility="Hidden"
                               PreviewMouseWheel="Sv_Plot_PreviewMouseWheel"
+                              PreviewMouseMove="Plot_MouseMove"
+                              MouseLeave="Plot_MouseLeave"
                               x:Name="svPlot">
 
                     <Grid Background="White"
-                          VerticalAlignment="Top"   >
+                          VerticalAlignment="Bottom"
+                          x:Name="plotGrid">
 
                         <Polyline Points="{Binding Plot.PlotPoints}"
                                   Stroke="OrangeRed"
                                   StrokeThickness="3"
-                                  SnapsToDevicePixels="True"/>
+                                  SnapsToDevicePixels="True"
+                                  HorizontalAlignment="Left"
+                                  x:Name="plotGraph"/>
 
                         <Path Data="{Binding Plot.PlotGrid}" 
                               Stroke="Gray" 
                               StrokeThickness="1"
-                              SnapsToDevicePixels="True"/>
+                              SnapsToDevicePixels="True"
+                              HorizontalAlignment="Left"/>
 
                     </Grid>
 
@@ -137,9 +152,9 @@
                 <!-- X Axis -->
                 <ScrollViewer Grid.Row="1" Grid.Column="1"
                               VerticalScrollBarVisibility="Disabled"
-                              HorizontalScrollBarVisibility="Visible"
+                              HorizontalScrollBarVisibility="Hidden"
                               ScrollChanged="svX_ScrollChanged"
-                              
+                              PreviewMouseUp="svX_PreviewMouseUp"
                               x:Name="svX">
 
                     <Grid Background="White"
