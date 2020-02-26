@@ -157,8 +157,11 @@ namespace MDP_PPG.PagedViews
 			{
 				Dispatcher.Invoke(delegate {
 					Plot = new SignalDataGV();
-					Plot.SetData(sd, CurrentScale, RectWindow);
+					Plot.SetData(sd);
 					TryUpdateScrollBars();
+					sbY.Value = Max_Y;
+					sbX.Value = Min_X;
+					TryUpdatePlot();
 				});
 			}
 
@@ -175,7 +178,10 @@ namespace MDP_PPG.PagedViews
 			if (Plot == null) return;
 
 			Plot.UpdatePlot(RectWindow, CurrentScale);
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PlotClip)));
 		}
+		public RectangleGeometry PlotClip => 
+			new RectangleGeometry(new Rect(0.0, 0.0, plotGrid.ActualWidth, plotGrid.ActualHeight));
 		private void TryUpdateScrollBars()
 		{
 			if (Plot == null) return;
@@ -183,49 +189,9 @@ namespace MDP_PPG.PagedViews
 			Max_X = Plot.SignalContainer.X_Range * SampleWidthGlobal;
 			Max_Y = Plot.SignalContainer.Y_Range * Y_ScaleGlobal;
 		}
-
-		//private void Sv_Plot_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
-		//{
-		//	if (Plot == null) return;
-
-		//	if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))
-		//	{
-		//		Plot.Change_XY_Scale(e.Delta);
-
-		//		//Y_ScaleStr = Plot.Y_Scale.ToString();
-		//		//SampleWidthStr = Plot.SampleWidth.ToString();
-		//	}
-		//	else if (Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift))
-		//	{
-		//		if (e.Delta > 0)
-		//			svX.LineLeft();
-		//		else
-		//			svX.LineRight();
-
-		//		e.Handled = true;
-		//	}
-		//	else
-		//	{
-		//		if (e.Delta > 0)
-		//			svY.LineUp();
-		//		else
-		//			svY.LineDown();
-
-		//		e.Handled = true;
-		//	}
-		//}
-		//private void svY_ScrollChanged(object sender, ScrollChangedEventArgs e)
-		//{
-		//	svPlot.ScrollToVerticalOffset(e.VerticalOffset);
-		//}
-		//private void svX_ScrollChanged(object sender, ScrollChangedEventArgs e)
-		//{
-		//	TryUpdatePlot();
-		//	svPlot.ScrollToHorizontalOffset(e.HorizontalOffset);
-		//}
-
+		
 		private Size CurrentScale => new Size(SampleWidthGlobal, Y_ScaleGlobal);
-		private Rect RectWindow => new Rect(sbX.Value, sbY.Value, plotGrid.ActualWidth, plotGrid.ActualHeight);
+		private Rect RectWindow => new Rect(sbX.Value, Max_Y - sbY.Value, plotGrid.ActualWidth, plotGrid.ActualHeight);
 
 		public string Y_ScaleStr
 		{
@@ -286,6 +252,49 @@ namespace MDP_PPG.PagedViews
 		private void Plot_MouseLeave(object sender, MouseEventArgs e)
 		{
 			MousePos = string.Empty;
+		}
+
+		private void Plot_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+		{
+			if (Plot == null) return;
+
+			if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))
+			{
+				double deltaScale = 1.0 + Math.Sign(e.Delta) * 0.1;
+
+				var newScale = new Size(CurrentScale.Width * deltaScale, CurrentScale.Height * deltaScale);
+
+				Plot.Change_XY_Scale(newScale);
+
+				SampleWidthGlobal = newScale.Width;
+				Y_ScaleGlobal = newScale.Height;
+
+				sampleWidthStr = SampleWidthGlobal.ToString();
+				y_ScaleStr = Y_ScaleGlobal.ToString();
+
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Y_ScaleStr)));
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SampleWidthStr)));
+			}
+			else if (Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift))
+			{
+				if (e.Delta > 0)
+					sbX.Value += Max_X * 0.05;
+				else
+					sbX.Value -= Max_X * 0.05;
+
+				e.Handled = true;
+			}
+			else
+			{
+				if (e.Delta > 0)
+					sbY.Value -= Max_Y * 0.05;
+				else
+					sbY.Value += Max_Y * 0.05;
+
+				e.Handled = true;
+			}
+
+			TryUpdatePlot();
 		}
 
 

@@ -84,11 +84,9 @@
             </Border>
         </WrapPanel>
 
-        <ContentControl Grid.Row="1"
-                        SnapsToDevicePixels="True">
-            <!--<ContentControl Style="{StaticResource infoContent}"
+        <ContentControl Style="{StaticResource infoContent}"
                         Grid.Row="1"
-                        SnapsToDevicePixels="True">-->
+                        SnapsToDevicePixels="True">
 
                 <Grid>
 
@@ -122,39 +120,42 @@
                 </Grid>
 
                 <!-- Plot -->
-                <Grid Grid.Row="0" Grid.Column="2" 
+                <Grid Grid.Row="0" Grid.Column="2"
                       Background="White"
+                      x:Name="plotGrid"
                       VerticalAlignment="Stretch"
                       HorizontalAlignment="Stretch"
-                      x:Name="plotGrid">
+                      Clip="{Binding PlotClip}"
+                      MouseMove="Plot_MouseMove"
+                      MouseLeave="Plot_MouseLeave"
+                      PreviewMouseWheel="Plot_PreviewMouseWheel">
 
-                    <StackPanel>
-                        <TextBlock Text="{Binding X_Value, StringFormat='X = {0}'}"/>
-                        <TextBlock Text="{Binding Y_Value, StringFormat='Y = {0}'}"/>
-                        <TextBlock Text="{Binding PlotRect}"/>
-                        <Polyline Points="{Binding Plot.PlotPoints}"
-                                  Stroke="OrangeRed"
-                                  StrokeThickness="3"
-                                  SnapsToDevicePixels="True"
-                                  HorizontalAlignment="Left"
-                                  x:Name="plotGraph"/>
-                    </StackPanel>
-                    
-                    <!--<Path Data="{Binding Plot.PlotGrid}" 
-                              Stroke="Gray" 
-                              StrokeThickness="1"
-                              SnapsToDevicePixels="True"
-                              HorizontalAlignment="Left"/>-->
-                    
+                    <Polyline Points="{Binding Plot.PlotPoints}"
+                                Stroke="OrangeRed"
+                                StrokeThickness="3"
+                                SnapsToDevicePixels="True"
+                                HorizontalAlignment="Left"
+                                x:Name="plotGraph"/>
+
+                    <Path Data="{Binding Plot.PlotGrid}" 
+                            Stroke="Gray" 
+                            StrokeThickness="1"
+                            SnapsToDevicePixels="True"
+                            HorizontalAlignment="Left"/>
+
                 </Grid>
 
-                <!-- X Axis -->
+                    <!-- X Axis -->
                 <Grid Grid.Row="1" Grid.Column="2"
-                      Background="White">
+                      Background="White"
+                      VerticalAlignment="Stretch"
+                      HorizontalAlignment="Stretch">
+
                     <Path Data="{Binding Plot.X_Axis}"
                               Stroke="Black"
                               StrokeThickness="2"
                               SnapsToDevicePixels="True"/>
+                    
                 </Grid>
                 <ScrollBar Grid.Row="2" Grid.Column="2"
                            Orientation="Horizontal"
@@ -163,72 +164,6 @@
                            Scroll="sbX_Scroll"
                            Minimum="{Binding Min_X}"
                            Maximum="{Binding Max_X}"/>
-
-                <!--<ScrollViewer Grid.Row="0" Grid.Column="0"
-                              VerticalScrollBarVisibility="Visible"
-                              HorizontalScrollBarVisibility="Disabled"
-                              ScrollChanged="svY_ScrollChanged"
-                              x:Name="svY">
-
-                    <Grid Background="White"
-                          VerticalAlignment="Bottom">
-
-                        <Path Data="{Binding Plot.Y_Axis}"
-                              Stroke="Black"
-                              StrokeThickness="2"
-                              SnapsToDevicePixels="True"/>
-
-                    </Grid>
-
-                </ScrollViewer>
-
-                <ScrollViewer Grid.Row="0" Grid.Column="1"
-                              VerticalScrollBarVisibility="Hidden"
-                              HorizontalScrollBarVisibility="Hidden"
-                              PreviewMouseWheel="Sv_Plot_PreviewMouseWheel"
-                              PreviewMouseMove="Plot_MouseMove"
-                              MouseLeave="Plot_MouseLeave"
-                              x:Name="svPlot">
-
-                    <Grid Background="White"
-                          VerticalAlignment="Bottom"
-                          x:Name="plotGrid">
-
-                        <Polyline Points="{Binding Plot.PlotPoints}"
-                                  Stroke="OrangeRed"
-                                  StrokeThickness="3"
-                                  SnapsToDevicePixels="True"
-                                  HorizontalAlignment="Left"
-                                  x:Name="plotGraph"/>
-
-                        <Path Data="{Binding Plot.PlotGrid}" 
-                              Stroke="Gray" 
-                              StrokeThickness="1"
-                              SnapsToDevicePixels="True"
-                              HorizontalAlignment="Left"/>
-
-                    </Grid>
-
-                </ScrollViewer>
-
-                <ScrollViewer Grid.Row="1" Grid.Column="1"
-                              VerticalScrollBarVisibility="Disabled"
-                              HorizontalScrollBarVisibility="Visible"
-                              ScrollChanged="svX_ScrollChanged"
-                              x:Name="svX">
-
-                    <Grid Background="White"
-                          VerticalAlignment="Center"
-                          HorizontalAlignment="Stretch">
-
-                        <Path Data="{Binding Plot.X_Axis}" 
-                              Stroke="Black" 
-                              StrokeThickness="2"
-                              SnapsToDevicePixels="True"/>
-
-                    </Grid>
-
-                </ScrollViewer>-->
 
             </Grid>
 
