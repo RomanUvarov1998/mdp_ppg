@@ -31,6 +31,8 @@ namespace MDP_PPG.ViewModels
 
 			X_Range = Max_X - Min_X;
 			Y_Range = Max_Y - Min_Y;
+
+			PixelsPerDip = pixelsPerDip;
 		}
 		private double PixelsPerDip;
 
@@ -69,7 +71,9 @@ namespace MDP_PPG.ViewModels
 					p.X * scale.Width >= rectWindow.Left &&
 					p.X * scale.Width <= rectWindow.Right)
 				.Select(p => new PlotDataPoint(
-					new Point(p.X * scale.Width - rectWindow.Left, rectWindow.Bottom - p.Y * scale.Height),
+					new Point(
+						p.X * scale.Width - rectWindow.Left,
+						rectWindow.Height - (p.Y * scale.Height - rectWindow.Top)),
 					p)
 				)
 				.ToArray();
@@ -109,6 +113,15 @@ namespace MDP_PPG.ViewModels
 			//creating Y of each bar
 			List<double> yAxisBarsYs = new List<double>();
 			if (rectWindow.Bottom < rectWindow.Top) throw new Exception("wrong rect");
+
+			//double distDegree = Math.Ceiling(Math.Log10(MIN_BAR_DIST_Y / scale.Width));
+			//double dist = Math.Pow(10.0, distDegree);
+
+			//double minY = rectWindow.Top * scale.Height;
+			//double maxY = rectWindow.Bottom * scale.Height;
+
+			//double minValue = maxY
+
 			double cur_y = rectWindow.Bottom - rectWindow.Top;
 			while (cur_y > 0.0)
 			{
