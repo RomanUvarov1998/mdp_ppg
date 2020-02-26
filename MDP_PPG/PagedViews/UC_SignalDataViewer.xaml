@@ -26,7 +26,7 @@
                     <Setter Property="Template">
                         <Setter.Value>
                             <ControlTemplate TargetType="ContentControl">
-                                <TextBlock Text="{Binding Recording, Converter={StaticResource parent2MessageConverter}}" 
+                                <TextBlock Text="{Binding Plot, Converter={StaticResource parent2MessageConverter}}" 
                                            TextWrapping="Wrap"
                                            HorizontalAlignment="Center"
                                            VerticalAlignment="Center"/>
@@ -52,28 +52,27 @@
 
     <Grid>
 
-        <Grid.RowDefinitions>
-            <RowDefinition Height="auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="150"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
 
-        <WrapPanel IsEnabled="{Binding IsInterfaceEnabled}">
+        <StackPanel IsEnabled="{Binding IsInterfaceEnabled}">
             <TextBlock Text="Масштаб по времени"
                        Margin="3"/>
             <TextBox Text="{Binding SampleWidthStr, UpdateSourceTrigger=PropertyChanged}"
-                     Width="30"
+                     Width="auto"
                      Margin="3,3,10,3"/>
 
             <TextBlock Text="Масштаб по величине"
                        Margin="3"/>
             <TextBox Text="{Binding Y_ScaleStr, UpdateSourceTrigger=PropertyChanged}"
-                     Width="30"
+                     Width="auto"
                      Margin="3,3,10,3"/>
 
-
             <TextBlock Text="{Binding Plot.SizeInfo}"
-                       Margin="3"/>
-
+                       Margin="3"
+                       FontWeight="Bold"/>
 
             <Border BorderThickness="2"
                     BorderBrush="LightGray">
@@ -82,37 +81,38 @@
                        Margin="3"/>
 
             </Border>
-        </WrapPanel>
+        </StackPanel>
 
         <ContentControl Style="{StaticResource infoContent}"
-                        Grid.Row="1"
+                        Grid.Column="1"
                         SnapsToDevicePixels="True">
 
-                <Grid>
+            <Grid>
 
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*"/>
-                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="50"/>
                     <RowDefinition Height="auto"/>
                 </Grid.RowDefinitions>
 
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="auto"/>
-                    <ColumnDefinition Width="auto"/>
+                    <ColumnDefinition Width="100"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
                 <!-- Y Axis -->
                 <ScrollBar Grid.Row="0" Grid.Column="0"
                            Orientation="Vertical"
-                           x:Name="sbY"
                            Width="20"
-                           Scroll="sbY_Scroll"
+                           Scroll="SbY_Scroll"
                            Minimum="{Binding Min_Y}"
-                           Maximum="{Binding Max_Y}"/>
+                           Maximum="{Binding Max_Y}"
+                           Value="{Binding ScrollValue_Y, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                 
                 <Grid Grid.Row="0" Grid.Column="1"
-                      Background="White">
+                      Background="White"
+                      HorizontalAlignment="Right">
                     <Path Data="{Binding Plot.Y_Axis}"
                               Stroke="Black"
                               StrokeThickness="2"
@@ -159,11 +159,11 @@
                 </Grid>
                 <ScrollBar Grid.Row="2" Grid.Column="2"
                            Orientation="Horizontal"
-                           x:Name="sbX"
                            Height="20"
-                           Scroll="sbX_Scroll"
+                           Scroll="SbX_Scroll"
                            Minimum="{Binding Min_X}"
-                           Maximum="{Binding Max_X}"/>
+                           Maximum="{Binding Max_X}"
+                           Value="{Binding ScrollValue_X, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
 
             </Grid>
 

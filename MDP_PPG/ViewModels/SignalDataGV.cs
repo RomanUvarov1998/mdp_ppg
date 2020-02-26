@@ -11,25 +11,30 @@ namespace MDP_PPG.ViewModels
 {
 	public class SignalDataGV : INotifyPropertyChanged
 	{
-		public SignalDataGV()
+		public SignalDataGV(double pixelsPerDip)
 		{
-
+			PixelsPerDip = pixelsPerDip;
 		}
+		private double PixelsPerDip;
+
 		public void SetData(SignalData instance)
 		{
 			Instance = instance ?? throw new ArgumentNullException();
 
 			double[] values = instance.Data.Select(d => 0.0 + d).ToArray();
 
-			SignalContainer.SetData(values, 250.0);
+			SignalContainer.SetData(values, 250.0, PixelsPerDip);
 
 			PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(SizeInfo)));
 		}
 
-		public SignalContainer SignalContainer = new SignalContainer();
+		private SignalContainer SignalContainer = new SignalContainer();
 
 		private Size CurrentScale;
 		private Rect RectWindow;
+
+		public double X_Range => SignalContainer.X_Range;
+		public double Y_Range => SignalContainer.Y_Range;
 
 		public void UpdatePlot(Rect rectWindow, Size currentScale)
 		{
@@ -41,7 +46,12 @@ namespace MDP_PPG.ViewModels
 			Y_Axis = new GeometryGroup();
 			PlotGrid = new GeometryGroup();
 
-			SignalContainer.SetContainers(PlotPoints, PlotGrid, X_Axis, Y_Axis, RectWindow, CurrentScale);
+			SignalContainer.SetContainers(
+				PlotPoints, 
+				PlotGrid, 
+				X_Axis, 
+				Y_Axis, 
+				RectWindow, CurrentScale);
 
 			PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(PlotPoints)));
 			PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(X_Axis)));
@@ -49,7 +59,7 @@ namespace MDP_PPG.ViewModels
 			PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(PlotGrid)));
 		}
 
-		public string OnMouseMove(Point mousePosition)
+		public string GetDataPositionMessage(Point mousePosition)
 		{
 			var p = SignalContainer.GetPoint(mousePosition, RectWindow, CurrentScale);
 

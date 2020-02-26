@@ -32,7 +32,8 @@ namespace MDP_PPG.PagedViews
 
 			DataContext = this;
 
-			SampleWidthStr = "100";
+			CurrentScale = new Size(1000, 1);
+			SampleWidthStr = "1000";
 			Y_ScaleStr = "1";
 
 			Min_X = 0;
@@ -40,8 +41,12 @@ namespace MDP_PPG.PagedViews
 
 			Min_Y = 0;
 			Max_Y = 100;
+
+			UpdatePlotClip();
 		}
 
+
+		//--------------------------------------- Gui props -------------------------------------------
 		public bool IsLoadingData
 		{
 			get => isLoadingData;
@@ -53,30 +58,24 @@ namespace MDP_PPG.PagedViews
 			}
 		}
 		public bool IsInterfaceEnabled => !isLoadingData;
-
-		public SignalDataGV Plot
+		public string MousePos
 		{
-			get => plot;
+			get => mousePos;
 			set
 			{
-				plot = value;
-				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Plot)));
-				//svX.ScrollToLeftEnd();
-				//svY.ScrollToBottom();
+				mousePos = value;
+				PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(MousePos)));
 			}
 		}
-		public Recording Recording
+		public RectangleGeometry PlotClip
 		{
-			get => recording;
+			get => plotClip;
 			set
 			{
-				recording = value;
-				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Recording)));
-				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(RecordingIsNotNull)));
+				plotClip = value;
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PlotClip)));
 			}
 		}
-		public bool RecordingIsNotNull => Recording != null;
-
 		public double Min_X
 		{
 			get => min_X;
@@ -93,6 +92,18 @@ namespace MDP_PPG.PagedViews
 			{
 				max_X = value;
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Max_X)));
+			}
+		}
+		public double ScrollValue_X
+		{
+			get => scrollValue_X;
+			set
+			{
+				scrollValue_X = value;
+				if (value < Min_X) scrollValue_X = Min_X;
+				if (value > Max_X) scrollValue_X = Max_X;
+
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ScrollValue_X)));
 			}
 		}
 		public double Min_Y
@@ -113,86 +124,18 @@ namespace MDP_PPG.PagedViews
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Max_Y)));
 			}
 		}
-
-		public string X_Value => sbX.Value.ToString("G3");
-		public string Y_Value => sbY.Value.ToString("G3");
-		public string PlotRect => $"{plotGrid.ActualWidth.ToString("G3")} x {plotGrid.ActualHeight.ToString("G3")}";
-
-		private void sbX_Scroll(object sender, ScrollEventArgs e)
+		public double ScrollValue_Y
 		{
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(X_Value)));
-			TryUpdatePlot();
-		}
-
-		private void sbY_Scroll(object sender, ScrollEventArgs e)
-		{
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Y_Value)));
-			TryUpdatePlot();
-		}
-
-		public void Freeze()
-		{
-			IsLoadingData = true;
-		}
-
-		public async Task LoadData(ModelBase recording)
-		{
-			Recording = (Recording)recording ?? null;
-
-			if (Recording == null)
+			get => scrollValue_Y;
+			set
 			{
-				Plot = null;
-				IsLoadingData = false;
-				return;
+				scrollValue_Y = value;
+				if (value < Min_Y) scrollValue_Y = Min_Y;
+				if (value > Max_Y) scrollValue_Y = Max_Y;
+
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ScrollValue_Y)));
 			}
-
-			SignalData sd;
-
-			using (var context = new PPG_Context())
-			{
-				sd = await context.SignalDatas.FirstOrDefaultAsync(d => d.RecordingId == recording.Id);
-			}
-
-			if (sd != null)
-			{
-				Dispatcher.Invoke(delegate {
-					Plot = new SignalDataGV();
-					Plot.SetData(sd);
-					TryUpdateScrollBars();
-					sbY.Value = Max_Y;
-					sbX.Value = Min_X;
-					TryUpdatePlot();
-				});
-			}
-
-			IsLoadingData = false;
 		}
-
-		public void OnWindowResized()
-		{
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PlotRect)));
-			TryUpdatePlot();
-		}
-		private void TryUpdatePlot()
-		{
-			if (Plot == null) return;
-
-			Plot.UpdatePlot(RectWindow, CurrentScale);
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PlotClip)));
-		}
-		public RectangleGeometry PlotClip => 
-			new RectangleGeometry(new Rect(0.0, 0.0, plotGrid.ActualWidth, plotGrid.ActualHeight));
-		private void TryUpdateScrollBars()
-		{
-			if (Plot == null) return;
-
-			Max_X = Plot.SignalContainer.X_Range * SampleWidthGlobal;
-			Max_Y = Plot.SignalContainer.Y_Range * Y_ScaleGlobal;
-		}
-		
-		private Size CurrentScale => new Size(SampleWidthGlobal, Y_ScaleGlobal);
-		private Rect RectWindow => new Rect(sbX.Value, Max_Y - sbY.Value, plotGrid.ActualWidth, plotGrid.ActualHeight);
-
 		public string Y_ScaleStr
 		{
 			get => y_ScaleStr;
@@ -203,10 +146,9 @@ namespace MDP_PPG.PagedViews
 				double v = -1.0;
 				if (double.TryParse(value, out v) && v > 0)
 				{
-					Y_ScaleGlobal = v;
-					if (Plot != null)
-						Plot.SetYScale(Y_ScaleGlobal);
-					TryUpdateScrollBars();
+					CurrentScale.Height = v;
+					Plot?.SetYScale(CurrentScale.Height);
+					UpdateScrollBars(false);
 				}
 
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Y_ScaleStr)));
@@ -222,38 +164,77 @@ namespace MDP_PPG.PagedViews
 				double v = -1.0;
 				if (double.TryParse(value, out v) && v > 0)
 				{
-					SampleWidthGlobal = v;
-					if (Plot != null)
-						Plot.SetXScale(SampleWidthGlobal);
-					TryUpdateScrollBars();
+					CurrentScale.Width = v;
+					Plot?.SetXScale(CurrentScale.Width);
+					UpdateScrollBars(false);
 				}
 
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SampleWidthStr)));
 			}
 		}
-
-		public string MousePos
+		public SignalDataGV Plot
 		{
-			get => mousePos;
+			get => plot;
 			set
 			{
-				mousePos = value;
-				PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(MousePos)));
+				plot = value;
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Plot)));
 			}
 		}
+
+
+		//--------------------------------------- API ---------------------------------------------
+		public double PixelsPerDip = 1.25;
+		public void Freeze() => IsLoadingData = true;
+		public async Task LoadData(ModelBase recording)
+		{
+			if (recording == null)
+			{
+				Plot = null;
+				IsLoadingData = false;
+				return;
+			}
+
+			SignalData sd;
+
+			using (var context = new PPG_Context())
+			{
+				sd = await context.SignalDatas.FirstOrDefaultAsync(d => d.RecordingId == recording.Id);
+			}
+
+			if (sd != null)
+			{
+				Dispatcher.Invoke(delegate
+				{
+					Plot = new SignalDataGV(PixelsPerDip);
+					Plot.SetData(sd);
+					UpdateScrollBars(true);
+					Plot.UpdatePlot(RectWindow, CurrentScale);
+					UpdatePlotClip();
+				});
+			}
+
+			IsLoadingData = false;
+		}
+		public void OnWindowResized()
+		{
+			UpdatePlotClip();
+			UpdateScrollBars(false);
+			Plot?.UpdatePlot(RectWindow, CurrentScale);
+		}
+
+
+		//--------------------------------------- Events handlers ---------------------------------
 		private void Plot_MouseMove(object sender, MouseEventArgs e)
 		{
 			if (Plot == null) return;
-
 			var p = e.GetPosition(plotGrid);
-
-			MousePos = Plot.OnMouseMove(p);
+			MousePos = Plot.GetDataPositionMessage(p);
 		}
 		private void Plot_MouseLeave(object sender, MouseEventArgs e)
 		{
 			MousePos = string.Empty;
 		}
-
 		private void Plot_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
 		{
 			if (Plot == null) return;
@@ -262,15 +243,12 @@ namespace MDP_PPG.PagedViews
 			{
 				double deltaScale = 1.0 + Math.Sign(e.Delta) * 0.1;
 
-				var newScale = new Size(CurrentScale.Width * deltaScale, CurrentScale.Height * deltaScale);
+				CurrentScale = new Size(CurrentScale.Width * deltaScale, CurrentScale.Height * deltaScale);
 
-				Plot.Change_XY_Scale(newScale);
+				Plot.Change_XY_Scale(CurrentScale);
 
-				SampleWidthGlobal = newScale.Width;
-				Y_ScaleGlobal = newScale.Height;
-
-				sampleWidthStr = SampleWidthGlobal.ToString();
-				y_ScaleStr = Y_ScaleGlobal.ToString();
+				sampleWidthStr = CurrentScale.Width.ToString();
+				y_ScaleStr = CurrentScale.Height.ToString();
 
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Y_ScaleStr)));
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SampleWidthStr)));
@@ -278,24 +256,70 @@ namespace MDP_PPG.PagedViews
 			else if (Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift))
 			{
 				if (e.Delta > 0)
-					sbX.Value += Max_X * 0.05;
+					ScrollValue_X += Max_X * 0.05;
 				else
-					sbX.Value -= Max_X * 0.05;
+					ScrollValue_X -= Max_X * 0.05;
 
 				e.Handled = true;
 			}
 			else
 			{
 				if (e.Delta > 0)
-					sbY.Value -= Max_Y * 0.05;
+					ScrollValue_Y -= Max_Y * 0.05;
 				else
-					sbY.Value += Max_Y * 0.05;
+					ScrollValue_Y += Max_Y * 0.05;
 
 				e.Handled = true;
 			}
 
-			TryUpdatePlot();
+			Plot.UpdatePlot(RectWindow, CurrentScale);
 		}
+		private void SbX_Scroll(object sender, ScrollEventArgs e)
+		{
+			Plot?.UpdatePlot(RectWindow, CurrentScale);
+		}
+		private void SbY_Scroll(object sender, ScrollEventArgs e)
+		{
+			Plot?.UpdatePlot(RectWindow, CurrentScale);
+		}
+
+
+		//--------------------------------------- Refreshing visual -------------------------------
+		private void UpdatePlotClip()
+		{
+			PlotClip = new RectangleGeometry(new Rect(0.0, 0.0, plotGrid.ActualWidth, plotGrid.ActualHeight));
+		}
+		private void UpdateScrollBars(bool reset)
+		{
+			if (Plot == null) return;
+
+			double prevMaxX = Max_X;
+			double prevMaxY = Max_Y;
+
+			Max_X = Math.Max(Plot.X_Range * CurrentScale.Width - RectWindow.Width, RectWindow.Width);
+			Max_Y = Math.Max(Plot.Y_Range * CurrentScale.Height - RectWindow.Height, RectWindow.Height);
+
+			if (reset)
+			{
+				ScrollValue_X = Min_X;
+				ScrollValue_Y = Max_Y;
+			}
+			else
+			{
+				ScrollValue_X *= (prevMaxX != 0) ? Max_X / prevMaxX : 0;
+				ScrollValue_Y *= (prevMaxY != 0) ? Max_Y / prevMaxY : 0;
+			}
+		}
+
+
+		//--------------------------------------- Visual Info ---------------------------------------
+
+		private Size CurrentScale;
+		private Rect RectWindow => new Rect(
+			ScrollValue_X, 
+			Max_Y - ScrollValue_Y, 
+			plotGrid.ActualWidth, 
+			plotGrid.ActualHeight);
 
 
 		public event PropertyChangedEventHandler PropertyChanged;
@@ -303,15 +327,15 @@ namespace MDP_PPG.PagedViews
 
 		private bool isLoadingData;
 		private SignalDataGV plot;
-		private Recording recording;
 		private string sampleWidthStr;
 		private string y_ScaleStr;
-		private double SampleWidthGlobal;
-		private double Y_ScaleGlobal;
 		private string mousePos;
 		private double min_X;
 		private double max_X;
 		private double min_Y;
 		private double max_Y;
+		private RectangleGeometry plotClip = new RectangleGeometry();
+		private double scrollValue_X;
+		private double scrollValue_Y;
 	}
 }

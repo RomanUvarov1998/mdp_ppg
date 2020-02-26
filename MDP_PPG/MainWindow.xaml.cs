@@ -143,6 +143,8 @@ namespace MDP_PPG
 				await pvSignalPlot.LoadData(rec_PV.GetSelectedItem);
 			};
 
+			pvSignalPlot.PixelsPerDip = VisualTreeHelper.GetDpi(this).PixelsPerDip;
+
 			pvPatients.DoFilteredSearch();
 		}
 

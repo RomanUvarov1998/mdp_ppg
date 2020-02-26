@@ -101,6 +101,7 @@
     </Compile>
     <Compile Include="ViewModels\IViewModel.cs" />
     <Compile Include="ViewModels\PatientTVM.cs" />
+    <Compile Include="ViewModels\PlotDataPoint.cs" />
     <Compile Include="ViewModels\RecordingTVM.cs" />
     <Compile Include="ViewModels\SignalContainer.cs" />
     <Compile Include="ViewModels\SignalDataGV.cs" />

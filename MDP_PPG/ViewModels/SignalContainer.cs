@@ -11,7 +11,7 @@ namespace MDP_PPG.ViewModels
 {
 	public class SignalContainer
 	{
-		public void SetData(double[] values, double fs)
+		public void SetData(double[] values, double fs, double pixelsPerDip)
 		{
 			if (fs <= 0.0) throw new ArgumentException("fs > 0");
 			if (values == null) throw new ArgumentNullException("values must be not null");
@@ -32,6 +32,7 @@ namespace MDP_PPG.ViewModels
 			X_Range = Max_X - Min_X;
 			Y_Range = Max_Y - Min_Y;
 		}
+		private double PixelsPerDip;
 
 		public double[] Values;
 		public Point[] OriginalPoints;
@@ -107,6 +108,7 @@ namespace MDP_PPG.ViewModels
 			#region yAxis
 			//creating Y of each bar
 			List<double> yAxisBarsYs = new List<double>();
+			if (rectWindow.Bottom < rectWindow.Top) throw new Exception("wrong rect");
 			double cur_y = rectWindow.Bottom - rectWindow.Top;
 			while (cur_y > 0.0)
 			{
@@ -122,7 +124,7 @@ namespace MDP_PPG.ViewModels
 				var ft = GetTextField(yValue.ToString("G4"));
 				texts.Add(ft);
 			}
-			double maxTextWidth = texts.Max(t => t.Width);
+			double maxTextWidth = texts.Count > 0 ? texts.Max(t => t.Width) : 0;
 
 			//drawing bars and texts
 			for (int i = 0; i < yAxisBarsYs.Count; i++)
@@ -191,6 +193,6 @@ namespace MDP_PPG.ViewModels
 				new Typeface("Verdana"),
 				10,
 				Brushes.Gray,
-				1.25);			 
+				PixelsPerDip);			 
 	}
 }
