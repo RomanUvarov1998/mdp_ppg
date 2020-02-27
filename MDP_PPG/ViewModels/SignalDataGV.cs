@@ -34,8 +34,17 @@ namespace MDP_PPG.ViewModels
 		private Rect RectWindow;
 		private Point MousePos;
 
-		public double X_Range => SignalContainer.X_Range;
-		public double Y_Range => SignalContainer.Y_Range;
+		public Size AllPlotSize_Scaled
+		{
+			get
+			{
+				var notScaledRect = SignalContainer.AllPlotSize;
+
+				return new Size(
+					notScaledRect.Width * CurrentScale.Width, 
+					notScaledRect.Height * CurrentScale.Height);
+			}
+		}
 
 		public void UpdatePlot(Rect rectWindow, Size currentScale)
 		{
@@ -93,9 +102,10 @@ namespace MDP_PPG.ViewModels
 			CurrentScale.Width = newValue;
 			UpdatePlot(RectWindow, CurrentScale);
 		}
-		public void Change_XY_Scale(Size newScale)
+		public void Change_XY_Scale(Rect rectWindow, Size newScale)
 		{
-			CurrentScale = newScale;				
+			RectWindow = rectWindow;
+			CurrentScale = newScale;
 
 			UpdatePlot(RectWindow, CurrentScale);
 		}

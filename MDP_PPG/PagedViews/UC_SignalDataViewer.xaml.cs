@@ -36,10 +36,8 @@ namespace MDP_PPG.PagedViews
 			SampleWidthStr = "1000";
 			Y_ScaleStr = "1";
 
-			Min_X = 0;
 			Max_X = 100;
 
-			Min_Y = 0;
 			Max_Y = 100;
 
 			UpdatePlotClip();
@@ -67,15 +65,6 @@ namespace MDP_PPG.PagedViews
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PlotClip)));
 			}
 		}
-		public double Min_X
-		{
-			get => min_X;
-			set
-			{
-				min_X = value;
-				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Min_X)));
-			}
-		}
 		public double Max_X
 		{
 			get => max_X;
@@ -85,25 +74,25 @@ namespace MDP_PPG.PagedViews
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Max_X)));
 			}
 		}
+		public double X_Axis_ViewportSize
+		{
+			get => x_Axis_ViewportSize;
+			set
+			{
+				x_Axis_ViewportSize = value;
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(X_Axis_ViewportSize)));
+			}
+		}
 		public double ScrollValue_X
 		{
 			get => scrollValue_X;
 			set
 			{
 				scrollValue_X = value;
-				if (value < Min_X) scrollValue_X = Min_X;
+				if (value < 0.0) scrollValue_X = 0.0;
 				if (value > Max_X) scrollValue_X = Max_X;
 
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ScrollValue_X)));
-			}
-		}
-		public double Min_Y
-		{
-			get => min_Y;
-			set
-			{
-				min_Y = value;
-				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Min_Y)));
 			}
 		}
 		public double Max_Y
@@ -121,10 +110,19 @@ namespace MDP_PPG.PagedViews
 			set
 			{
 				scrollValue_Y = value;
-				if (value < Min_Y) scrollValue_Y = Min_Y;
+				if (value < 0.0) scrollValue_Y = 0.0;
 				if (value > Max_Y) scrollValue_Y = Max_Y;
 
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ScrollValue_Y)));
+			}
+		}
+		public double Y_Axis_ViewportSize
+		{
+			get => y_Axis_ViewportSize;
+			set
+			{
+				y_Axis_ViewportSize = value;
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Y_Axis_ViewportSize)));
 			}
 		}
 		public string Y_ScaleStr
@@ -139,7 +137,7 @@ namespace MDP_PPG.PagedViews
 				{
 					CurrentScale.Height = v;
 					Plot?.SetYScale(CurrentScale.Height);
-					UpdateScrollBars(false);
+					UpdateScrollBars(false, RectWindowCenterLocal);
 				}
 
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Y_ScaleStr)));
@@ -157,7 +155,7 @@ namespace MDP_PPG.PagedViews
 				{
 					CurrentScale.Width = v;
 					Plot?.SetXScale(CurrentScale.Width);
-					UpdateScrollBars(false);
+					UpdateScrollBars(false, RectWindowCenterLocal);
 				}
 
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SampleWidthStr)));
@@ -200,10 +198,7 @@ namespace MDP_PPG.PagedViews
 				{
 					Plot = new SignalDataGV(PixelsPerDip);
 					Plot.SetData(sd);
-					UpdateScrollBars(true);
-					Plot.UpdatePlot(RectWindow, CurrentScale);
-					UpdatePlotClip();
-					Plot.ClearHighlightedPoint();
+					OnWindowResized();
 				});
 			}
 
@@ -212,7 +207,7 @@ namespace MDP_PPG.PagedViews
 		public void OnWindowResized()
 		{
 			UpdatePlotClip();
-			UpdateScrollBars(false);
+			UpdateScrollBars(false, RectWindowCenterLocal);
 			Plot?.UpdatePlot(RectWindow, CurrentScale);
 			Plot?.ClearHighlightedPoint();
 		}
@@ -274,11 +269,14 @@ namespace MDP_PPG.PagedViews
 
 			if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))
 			{
-				double deltaScale = 1.0 + Math.Sign(e.Delta) * 0.1;
+				Rect curRect = RectWindow;
+				Point mousePosLocal = e.GetPosition(plotGrid);
 
+				double deltaScale = 1.0 + Math.Sign(e.Delta) * 0.1;
 				CurrentScale = new Size(CurrentScale.Width * deltaScale, CurrentScale.Height * deltaScale);
 
-				Plot.Change_XY_Scale(CurrentScale);
+				Plot.Change_XY_Scale(RectWindow, CurrentScale);
+				UpdateScrollBars(false, mousePosLocal);
 
 				sampleWidthStr = CurrentScale.Width.ToString();
 				y_ScaleStr = CurrentScale.Height.ToString();
@@ -325,25 +323,43 @@ namespace MDP_PPG.PagedViews
 		{
 			PlotClip = new RectangleGeometry(new Rect(0.0, 0.0, plotGrid.ActualWidth, plotGrid.ActualHeight));
 		}
-		private void UpdateScrollBars(bool reset)
+		private void UpdateScrollBars(bool reset, Point anchorPointLocal)
 		{
 			if (Plot == null) return;
 
 			double prevMaxX = Max_X;
 			double prevMaxY = Max_Y;
 
-			Max_X = Math.Max(Plot.X_Range * CurrentScale.Width - RectWindow.Width, RectWindow.Width);
-			Max_Y = Math.Max(Plot.Y_Range * CurrentScale.Height - RectWindow.Height, RectWindow.Height);
+			Rect curRect = RectWindow;
+			Size plotScaledSize = Plot.AllPlotSize_Scaled;
+
+			Max_X = Math.Max(0.0, plotScaledSize.Width - curRect.Width);
+			Max_Y = Math.Max(0.0, plotScaledSize.Height - curRect.Height);
+
+			X_Axis_ViewportSize = curRect.Width;
+			Y_Axis_ViewportSize = curRect.Height;
 
 			if (reset)
 			{
-				ScrollValue_X = Min_X;
+				ScrollValue_X = 0.0;
 				ScrollValue_Y = Max_Y;
 			}
 			else
 			{
-				ScrollValue_X *= (prevMaxX != 0) ? Max_X / prevMaxX : 0;
-				ScrollValue_Y *= (prevMaxY != 0) ? Max_Y / prevMaxY : 0;
+				Point anchorPointGlobal = anchorPointLocal;
+				anchorPointGlobal.Offset(curRect.Left, curRect.Top);
+
+				double kX = (Max_X + curRect.Width) / (prevMaxX + curRect.Width);
+				double kY = (Max_Y + curRect.Height) / (prevMaxY + curRect.Height);
+
+				Point nextAnchorPointGlobal = new Point(
+					anchorPointGlobal.X * kX,
+					anchorPointGlobal.Y * kY);
+
+				Vector anchorOffset = nextAnchorPointGlobal - anchorPointGlobal;
+
+				ScrollValue_X += anchorOffset.X;
+				ScrollValue_Y += anchorOffset.Y;
 			}
 		}
 
@@ -356,6 +372,8 @@ namespace MDP_PPG.PagedViews
 			Max_Y - ScrollValue_Y,
 			plotGrid.ActualWidth,
 			plotGrid.ActualHeight);
+		private Point RectWindowCenterLocal =>
+			new Point(plotGrid.ActualWidth / 2.0, plotGrid.ActualHeight / 2.0);
 
 
 		public event PropertyChangedEventHandler PropertyChanged;
@@ -365,13 +383,13 @@ namespace MDP_PPG.PagedViews
 		private SignalDataGV plot;
 		private string sampleWidthStr;
 		private string y_ScaleStr;
-		private double min_X;
 		private double max_X;
-		private double min_Y;
 		private double max_Y;
 		private RectangleGeometry plotClip = new RectangleGeometry();
 		private double scrollValue_X;
 		private double scrollValue_Y;
 		private bool isMouseRightButtonDown = false;
+		private double y_Axis_ViewportSize;
+		private double x_Axis_ViewportSize;
 	}
 }

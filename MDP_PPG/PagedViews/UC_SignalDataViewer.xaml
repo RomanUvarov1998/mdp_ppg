@@ -99,9 +99,10 @@
                            Orientation="Vertical"
                            Width="20"
                            Scroll="SbY_Scroll"
-                           Minimum="{Binding Min_Y}"
+                           Minimum="0"
                            Maximum="{Binding Max_Y}"
-                           Value="{Binding ScrollValue_Y, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                           Value="{Binding ScrollValue_Y, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                           ViewportSize="{Binding Y_Axis_ViewportSize}"/>
                 
                 <Grid Grid.Row="0" Grid.Column="1"
                       Background="White"
@@ -124,7 +125,9 @@
                       PreviewMouseWheel="Plot_PreviewMouseWheel"
                       MouseDown="Plot_MouseDown"
                       MouseUp="Plot_MouseUp"
-                      Cursor="{Binding PlotCursor}">
+                      Cursor="{Binding PlotCursor}"
+                      MinWidth="100"
+                      MinHeight="100">
 
                     <Polyline Points="{Binding Plot.PlotPoints}"
                                 Stroke="Green"
@@ -169,9 +172,10 @@
                            Orientation="Horizontal"
                            Height="20"
                            Scroll="SbX_Scroll"
-                           Minimum="{Binding Min_X}"
+                           Minimum="0"
                            Maximum="{Binding Max_X}"
-                           Value="{Binding ScrollValue_X, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                           Value="{Binding ScrollValue_X, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                           ViewportSize="{Binding X_Axis_ViewportSize}"/>
 
             </Grid>
 

@@ -35,6 +35,30 @@ namespace MDP_PPG.ViewModels
 			PixelsPerDip = pixelsPerDip;
 		}
 		private double PixelsPerDip;
+		
+		public Size AllPlotSize
+		{
+			get
+			{
+				double width = Max_X;
+				double height;
+
+				if (Min_Y < 0 && Max_Y <= 0)
+				{
+					height = Math.Abs(Min_Y);
+				}
+				else if (Min_Y <= 0 && Max_Y > 0)
+				{
+					height = Math.Abs(Max_Y - Min_Y);
+				}
+				else
+				{
+					height = Math.Abs(Max_Y);
+				}
+
+				return new Size(width, height);
+			}
+		}
 
 		public double[] Values;
 		public Point[] OriginalPoints;
@@ -125,25 +149,28 @@ namespace MDP_PPG.ViewModels
 			double valueLeft = rectWindow.Left / scale.Width;
 			double valueRight = rectWindow.Right / scale.Width;
 
-			if (valueLeft > DrawnPoints.Last().ValueTime.X)
-				throw new Exception("no plot");
-			
-			double minTimeStep = MIN_BAR_DIST_X / scale.Width;
-
-			int timePassed = (int)Math.Ceiling(valueLeft / minTimeStep);
-			double emptyLeft = timePassed * minTimeStep - valueLeft;
-			int firstDistNum = (int)Math.Truncate(emptyLeft / Ts);
-
-			int samplesPerDist = (int)Math.Truncate(minTimeStep / Ts);
-
 			List<double> xAxisBarsXs = new List<double>();
-			for (int i = firstDistNum; i < DrawnPoints.Length; i += samplesPerDist)
+			if (DrawnPoints.Length > 0)
 			{
-				var x = DrawnPoints[i].DisplayPoint.X;
-				xAxisBarsXs.Add(x);
+				if (valueLeft > DrawnPoints.Last().ValueTime.X)
+					throw new Exception("no plot");
 
-				x_Axis.Children.Add(GetVerticalBarFor_X(x));
-				x_Axis.Children.Add(TextAt(DrawnPoints[i].ValueTime.X.ToString("G4"), x));
+				double minTimeStep = MIN_BAR_DIST_X / scale.Width;
+
+				int timePassed = (int)Math.Ceiling(valueLeft / minTimeStep);
+				double emptyLeft = timePassed * minTimeStep - valueLeft;
+				int firstDistNum = (int)Math.Truncate(emptyLeft / Ts);
+
+				int samplesPerDist = (int)Math.Ceiling(minTimeStep / Ts);
+
+				for (int i = firstDistNum; i < DrawnPoints.Length; i += samplesPerDist)
+				{
+					var x = DrawnPoints[i].DisplayPoint.X;
+					xAxisBarsXs.Add(x);
+
+					x_Axis.Children.Add(GetVerticalBarFor_X(x));
+					x_Axis.Children.Add(TextAt(DrawnPoints[i].ValueTime.X.ToString("G4"), x));
+				}
 			}
 			#endregion
 
