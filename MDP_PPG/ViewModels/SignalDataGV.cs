@@ -99,7 +99,7 @@ namespace MDP_PPG.ViewModels
 
 			UpdatePlot(RectWindow, CurrentScale);
 		}
-
+		
 		public SignalData Instance { get; private set; }
 
 		public string SizeInfo => Instance?.Data == null ? string.Empty : $"Размер {Instance.Data.Length.ToString("N")} байт";

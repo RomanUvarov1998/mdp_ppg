@@ -280,6 +280,6 @@ namespace MDP_PPG.ViewModels
 				new Typeface("Verdana"),
 				10,
 				Brushes.Gray,
-				PixelsPerDip);			 
+				PixelsPerDip);
 	}
 }

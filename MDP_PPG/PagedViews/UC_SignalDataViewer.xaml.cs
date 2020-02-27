@@ -58,15 +58,6 @@ namespace MDP_PPG.PagedViews
 			}
 		}
 		public bool IsInterfaceEnabled => !isLoadingData;
-		public string MousePos
-		{
-			get => mousePos;
-			set
-			{
-				mousePos = value;
-				PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(MousePos)));
-			}
-		}
 		public RectangleGeometry PlotClip
 		{
 			get => plotClip;
@@ -181,6 +172,7 @@ namespace MDP_PPG.PagedViews
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Plot)));
 			}
 		}
+		public Cursor PlotCursor => IsMouseRightButtonDown ? Cursors.ScrollAll : Cursors.Cross;
 
 
 		//--------------------------------------- API ---------------------------------------------
@@ -229,15 +221,56 @@ namespace MDP_PPG.PagedViews
 		//--------------------------------------- Events handlers ---------------------------------
 		private void Plot_MouseMove(object sender, MouseEventArgs e)
 		{
-			Plot?.HighLightPointNearestTo(e.GetPosition(plotGrid));
+			Point currentMousePosition = e.GetPosition(plotGrid);
+
+			Plot?.HighLightPointNearestTo(currentMousePosition);
+
+			if (Mouse.RightButton == MouseButtonState.Released)
+				IsMouseRightButtonDown = false;
+
+			if (IsMouseRightButtonDown)
+			{
+				ScrollValue_X += MouseRightButtonDownPoint.X - currentMousePosition.X;
+				ScrollValue_Y += MouseRightButtonDownPoint.Y - currentMousePosition.Y;
+
+				MouseRightButtonDownPoint = currentMousePosition;
+
+				Plot?.UpdatePlot(RectWindow, CurrentScale);
+			}
 		}
 		private void Plot_MouseLeave(object sender, MouseEventArgs e)
 		{
-			MousePos = string.Empty;
+			IsMouseRightButtonDown = false;
+			Plot?.ClearHighlightedPoint();
 		}
+		private bool IsMouseRightButtonDown
+		{
+			get => isMouseRightButtonDown;
+			set
+			{
+				isMouseRightButtonDown = value;
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PlotCursor)));
+			}
+		}
+		private Point MouseRightButtonDownPoint;
+		private void Plot_MouseDown(object sender, MouseButtonEventArgs e)
+		{
+			if (Mouse.RightButton == MouseButtonState.Pressed)
+			{
+				IsMouseRightButtonDown = true;
+				MouseRightButtonDownPoint = e.GetPosition(plotGrid);
+			}
+		}
+		private void Plot_MouseUp(object sender, MouseButtonEventArgs e)
+		{
+			if (Mouse.RightButton == MouseButtonState.Released)
+				IsMouseRightButtonDown = false;
+		}
+
 		private void Plot_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
 		{
 			if (Plot == null) return;
+			if (IsMouseRightButtonDown) return;
 
 			if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))
 			{
@@ -319,9 +352,9 @@ namespace MDP_PPG.PagedViews
 
 		private Size CurrentScale;
 		private Rect RectWindow => new Rect(
-			ScrollValue_X, 
-			Max_Y - ScrollValue_Y, 
-			plotGrid.ActualWidth, 
+			ScrollValue_X,
+			Max_Y - ScrollValue_Y,
+			plotGrid.ActualWidth,
 			plotGrid.ActualHeight);
 
 
@@ -332,7 +365,6 @@ namespace MDP_PPG.PagedViews
 		private SignalDataGV plot;
 		private string sampleWidthStr;
 		private string y_ScaleStr;
-		private string mousePos;
 		private double min_X;
 		private double max_X;
 		private double min_Y;
@@ -340,5 +372,6 @@ namespace MDP_PPG.PagedViews
 		private RectangleGeometry plotClip = new RectangleGeometry();
 		private double scrollValue_X;
 		private double scrollValue_Y;
+		private bool isMouseRightButtonDown = false;
 	}
 }

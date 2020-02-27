@@ -121,15 +121,17 @@
                       Clip="{Binding PlotClip}"
                       MouseMove="Plot_MouseMove"
                       MouseLeave="Plot_MouseLeave"
-                      PreviewMouseWheel="Plot_PreviewMouseWheel">
+                      PreviewMouseWheel="Plot_PreviewMouseWheel"
+                      MouseDown="Plot_MouseDown"
+                      MouseUp="Plot_MouseUp"
+                      Cursor="{Binding PlotCursor}">
 
                     <Polyline Points="{Binding Plot.PlotPoints}"
                                 Stroke="Green"
                                 StrokeThickness="3"
                                 SnapsToDevicePixels="True"
                                 HorizontalAlignment="Left"
-                                StrokeLineJoin="Round" 
-                                x:Name="plotGraph"/>
+                                StrokeLineJoin="Round" />
 
                     <Path Data="{Binding Plot.PlotGrid}" 
                             Stroke="Gray" 
