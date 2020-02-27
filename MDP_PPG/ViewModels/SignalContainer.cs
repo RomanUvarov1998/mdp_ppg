@@ -50,7 +50,8 @@ namespace MDP_PPG.ViewModels
 		public double X_Range;
 		public double Y_Range;
 
-		public void HighLightPointNearestTo(Point point, Rect rectWindow, Size scale, GeometryGroup gg)
+		public void HighLightPointNearestTo(Point point, Rect rectWindow,
+			GeometryGroup ggCircle, GeometryGroup ggText)
 		{
 			if (DrawnPoints.Length == 0) return;
 
@@ -79,16 +80,16 @@ namespace MDP_PPG.ViewModels
 			loc.Y = Math.Min(loc.Y, rectWindow.Height - tf.Height - 3);
 
 			var geom = tf.BuildGeometry(loc);
-			gg.Children.Add(geom);
+			ggText.Children.Add(geom);
 
 			var p1 = pdp.DisplayPoint;
 			var p2 = pdp.DisplayPoint;
 
-			p1.Offset(-1, -1);
-			p2.Offset(1, 1);
+			p1.Offset(-2, -2);
+			p2.Offset(2, 2);
 
-			var rectGeom = new RectangleGeometry(new Rect(p1, p2));
-			gg.Children.Add(rectGeom);
+			var rectGeom = new EllipseGeometry(new Rect(p1, p2));
+			ggCircle.Children.Add(rectGeom);
 		}
 
 		public void SetContainers(
@@ -121,22 +122,28 @@ namespace MDP_PPG.ViewModels
 				new Point(rectWindow.Width, X_AXIS_Y));
 			x_Axis.Children.Add(axisX);
 
-			double deltaDist = Ts * scale.Width;
-			double curDist = 0.0;
+			double valueLeft = rectWindow.Left / scale.Width;
+			double valueRight = rectWindow.Right / scale.Width;
+
+			if (valueLeft > DrawnPoints.Last().ValueTime.X)
+				throw new Exception("no plot");
+			
+			double minTimeStep = MIN_BAR_DIST_X / scale.Width;
+
+			int timePassed = (int)Math.Ceiling(valueLeft / minTimeStep);
+			double emptyLeft = timePassed * minTimeStep - valueLeft;
+			int firstDistNum = (int)Math.Truncate(emptyLeft / Ts);
+
+			int samplesPerDist = (int)Math.Truncate(minTimeStep / Ts);
+
 			List<double> xAxisBarsXs = new List<double>();
-			for (int i = 0; i < DrawnPoints.Length; ++i)
+			for (int i = firstDistNum; i < DrawnPoints.Length; i += samplesPerDist)
 			{
-				if (curDist >= MIN_BAR_DIST_X || i == 0)
-				{
-					var x = DrawnPoints[i].DisplayPoint.X;
-					xAxisBarsXs.Add(x);
+				var x = DrawnPoints[i].DisplayPoint.X;
+				xAxisBarsXs.Add(x);
 
-					x_Axis.Children.Add(GetVerticalBarFor_X(x));
-					x_Axis.Children.Add(TextAt(DrawnPoints[i].ValueTime.X.ToString("G4"), x));
-
-					curDist = 0.0;
-				}
-				curDist += deltaDist;
+				x_Axis.Children.Add(GetVerticalBarFor_X(x));
+				x_Axis.Children.Add(TextAt(DrawnPoints[i].ValueTime.X.ToString("G4"), x));
 			}
 			#endregion
 
@@ -146,8 +153,8 @@ namespace MDP_PPG.ViewModels
 			List<double> yAxisBarsYs = new List<double>();
 			if (rectWindow.Bottom < rectWindow.Top) throw new Exception("wrong rect");
 
-			double distDegree = Math.Ceiling(Math.Log10(MIN_BAR_DIST_Y / scale.Height));
-			double dist = Math.Pow(10.0, distDegree);
+			double distDegree_Y = Math.Ceiling(Math.Log10(MIN_BAR_DIST_Y / scale.Height));
+			double dist_Y = Math.Pow(10.0, distDegree_Y);
 
 			//signal values for rect top and rect bottom
 			double maxValue = DtoW_Y(0.0, rectWindow, scale);
@@ -157,25 +164,25 @@ namespace MDP_PPG.ViewModels
 
 			if (maxValue <= 0 && minValue <= 0)
 			{
-				for (double value = 0.0; value > minValue; value -= dist)
+				for (double value = 0.0; value > minValue; value -= dist_Y)
 					if (value >= minValue && value <= maxValue)
 						roundValues.Add(value);
 			}
 			else if (maxValue > 0 && minValue < 0)
 			{
-				for (double value = dist; value < maxValue; value += dist)
+				for (double value = dist_Y; value < maxValue; value += dist_Y)
 					if (value >= minValue && value <= maxValue)
 						roundValues.Add(value);
 
 				roundValues.Add(0.0);
 
-				for (double value = -dist; value > minValue; value -= dist)
+				for (double value = -dist_Y; value > minValue; value -= dist_Y)
 					if (value >= minValue && value <= maxValue)
 						roundValues.Add(value);
 			}
 			else if (maxValue >= 0 && minValue >= 0)
 			{
-				for (double value = 0.0; value < maxValue; value += dist)
+				for (double value = 0.0; value < maxValue; value += dist_Y)
 					if (value >= minValue && value <= maxValue)
 						roundValues.Add(value);
 			}

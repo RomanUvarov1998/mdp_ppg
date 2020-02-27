@@ -63,11 +63,13 @@ namespace MDP_PPG.ViewModels
 		public void HighLightPointNearestTo(Point mousePosition)
 		{
 			HighLightedPoint = new GeometryGroup();
+			HighLightedPointText = new GeometryGroup();
 			MousePos = mousePosition;
 
-			SignalContainer.HighLightPointNearestTo(mousePosition, RectWindow, CurrentScale, HighLightedPoint);
+			SignalContainer.HighLightPointNearestTo(mousePosition, RectWindow, HighLightedPoint, HighLightedPointText);
 
 			PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(HighLightedPoint)));
+			PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(HighLightedPointText)));
 		}
 		public void RefreshHighlightedPoint()
 		{
@@ -76,7 +78,9 @@ namespace MDP_PPG.ViewModels
 		public void ClearHighlightedPoint()
 		{
 			HighLightedPoint = new GeometryGroup();
+			HighLightedPointText = new GeometryGroup();
 			PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(HighLightedPoint)));
+			PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(HighLightedPointText)));
 		}
 
 		public void SetYScale(double newValue)
@@ -105,6 +109,7 @@ namespace MDP_PPG.ViewModels
 		public GeometryGroup X_Axis { get; set; } = new GeometryGroup();
 		public GeometryGroup Y_Axis { get; set; } = new GeometryGroup();
 		public GeometryGroup HighLightedPoint { get; set; } = new GeometryGroup();
+		public GeometryGroup HighLightedPointText { get; set; } = new GeometryGroup();
 
 
 		public event PropertyChangedEventHandler PropertyChanged;

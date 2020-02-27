@@ -278,10 +278,12 @@ namespace MDP_PPG.PagedViews
 		private void SbX_Scroll(object sender, ScrollEventArgs e)
 		{
 			Plot?.UpdatePlot(RectWindow, CurrentScale);
+			Plot?.RefreshHighlightedPoint();
 		}
 		private void SbY_Scroll(object sender, ScrollEventArgs e)
 		{
 			Plot?.UpdatePlot(RectWindow, CurrentScale);
+			Plot?.RefreshHighlightedPoint();
 		}
 
 

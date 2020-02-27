@@ -77,7 +77,8 @@
 
         <ContentControl Style="{StaticResource infoContent}"
                         Grid.Column="1"
-                        SnapsToDevicePixels="True">
+                        SnapsToDevicePixels="True"
+                        Margin="10">
 
             <Grid>
 
@@ -127,6 +128,7 @@
                                 StrokeThickness="3"
                                 SnapsToDevicePixels="True"
                                 HorizontalAlignment="Left"
+                                StrokeLineJoin="Round" 
                                 x:Name="plotGraph"/>
 
                     <Path Data="{Binding Plot.PlotGrid}" 
@@ -136,7 +138,13 @@
                             HorizontalAlignment="Left"/>
 
                     <Path Data="{Binding Plot.HighLightedPoint}" 
-                            Stroke="OrangeRed" 
+                            Stroke="Red" 
+                            StrokeThickness="2"
+                            SnapsToDevicePixels="True"
+                            HorizontalAlignment="Left"/>
+
+                    <Path Data="{Binding Plot.HighLightedPointText}" 
+                            Stroke="Black" 
                             StrokeThickness="1"
                             SnapsToDevicePixels="True"
                             HorizontalAlignment="Left"/>
