@@ -211,6 +211,7 @@ namespace MDP_PPG.PagedViews
 					UpdateScrollBars(true);
 					Plot.UpdatePlot(RectWindow, CurrentScale);
 					UpdatePlotClip();
+					Plot.ClearHighlightedPoint();
 				});
 			}
 
@@ -221,15 +222,14 @@ namespace MDP_PPG.PagedViews
 			UpdatePlotClip();
 			UpdateScrollBars(false);
 			Plot?.UpdatePlot(RectWindow, CurrentScale);
+			Plot?.ClearHighlightedPoint();
 		}
 
 
 		//--------------------------------------- Events handlers ---------------------------------
 		private void Plot_MouseMove(object sender, MouseEventArgs e)
 		{
-			if (Plot == null) return;
-			var p = e.GetPosition(plotGrid);
-			MousePos = Plot.GetDataPositionMessage(p);
+			Plot?.HighLightPointNearestTo(e.GetPosition(plotGrid));
 		}
 		private void Plot_MouseLeave(object sender, MouseEventArgs e)
 		{
@@ -273,6 +273,7 @@ namespace MDP_PPG.PagedViews
 			}
 
 			Plot.UpdatePlot(RectWindow, CurrentScale);
+			Plot.RefreshHighlightedPoint();
 		}
 		private void SbX_Scroll(object sender, ScrollEventArgs e)
 		{

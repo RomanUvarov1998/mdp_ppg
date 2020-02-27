@@ -50,11 +50,45 @@ namespace MDP_PPG.ViewModels
 		public double X_Range;
 		public double Y_Range;
 
-		public Point GetPoint(Point point, Rect rectWindow, Size scale)
+		public void HighLightPointNearestTo(Point point, Rect rectWindow, Size scale, GeometryGroup gg)
 		{
-			double x = (rectWindow.Left + point.X) / scale.Width;
-			double y = (rectWindow.Height - point.Y) / scale.Height;
-			return new Point(x, y);
+			if (DrawnPoints.Length == 0) return;
+
+			PlotDataPoint pdp = DrawnPoints[0];
+			double minDistY = Dist2(pdp.DisplayPoint, point);
+
+			if (DrawnPoints.Length > 1)
+				for (int i = 1; i < DrawnPoints.Length; ++i)
+				{
+					double curDist = Dist2(DrawnPoints[i].DisplayPoint, point);
+					if (curDist < minDistY)
+					{
+						minDistY = curDist;
+						pdp = DrawnPoints[i];
+					}
+				}
+
+			string message = $"{pdp.ValueTime.X.ToString("G3")}; {pdp.ValueTime.Y.ToString("G4")}";
+			var tf = GetTextField(message);
+
+			var loc = new Point(pdp.DisplayPoint.X - tf.Width - 3, pdp.DisplayPoint.Y);
+
+			loc.X = Math.Max(0.0, point.X + 20);
+			loc.X = Math.Min(loc.X, rectWindow.Width - tf.Width);
+			loc.Y = Math.Max(0.0, loc.Y);
+			loc.Y = Math.Min(loc.Y, rectWindow.Height - tf.Height - 3);
+
+			var geom = tf.BuildGeometry(loc);
+			gg.Children.Add(geom);
+
+			var p1 = pdp.DisplayPoint;
+			var p2 = pdp.DisplayPoint;
+
+			p1.Offset(-1, -1);
+			p2.Offset(1, 1);
+
+			var rectGeom = new RectangleGeometry(new Rect(p1, p2));
+			gg.Children.Add(rectGeom);
 		}
 
 		public void SetContainers(
@@ -66,19 +100,17 @@ namespace MDP_PPG.ViewModels
 		{
 			//------------------- draw plot --------------------------
 			#region plot
-			var dataPoints = OriginalPoints
+			DrawnPoints = OriginalPoints
 				.Where(p =>
 					p.X * scale.Width >= rectWindow.Left &&
 					p.X * scale.Width <= rectWindow.Right)
 				.Select(p => new PlotDataPoint(
-					new Point(
-						p.X * scale.Width - rectWindow.Left,
-						rectWindow.Height - (p.Y * scale.Height - rectWindow.Top)),
+					new Point(WtoD_X(p.X, rectWindow, scale), WtoD_Y(p.Y, rectWindow, scale)),
 					p)
 				)
 				.ToArray();
 
-			foreach (var pdp in dataPoints)
+			foreach (var pdp in DrawnPoints)
 				plotPoints.Add(pdp.DisplayPoint);
 			#endregion
 
@@ -92,15 +124,15 @@ namespace MDP_PPG.ViewModels
 			double deltaDist = Ts * scale.Width;
 			double curDist = 0.0;
 			List<double> xAxisBarsXs = new List<double>();
-			for (int i = 0; i < dataPoints.Length; ++i)
+			for (int i = 0; i < DrawnPoints.Length; ++i)
 			{
 				if (curDist >= MIN_BAR_DIST_X || i == 0)
 				{
-					var x = dataPoints[i].DisplayPoint.X;
+					var x = DrawnPoints[i].DisplayPoint.X;
 					xAxisBarsXs.Add(x);
 
 					x_Axis.Children.Add(GetVerticalBarFor_X(x));
-					x_Axis.Children.Add(TextAt(dataPoints[i].ValueTime.X.ToString("G4"), x));
+					x_Axis.Children.Add(TextAt(DrawnPoints[i].ValueTime.X.ToString("G4"), x));
 
 					curDist = 0.0;
 				}
@@ -114,27 +146,51 @@ namespace MDP_PPG.ViewModels
 			List<double> yAxisBarsYs = new List<double>();
 			if (rectWindow.Bottom < rectWindow.Top) throw new Exception("wrong rect");
 
-			//double distDegree = Math.Ceiling(Math.Log10(MIN_BAR_DIST_Y / scale.Width));
-			//double dist = Math.Pow(10.0, distDegree);
+			double distDegree = Math.Ceiling(Math.Log10(MIN_BAR_DIST_Y / scale.Height));
+			double dist = Math.Pow(10.0, distDegree);
 
-			//double minY = rectWindow.Top * scale.Height;
-			//double maxY = rectWindow.Bottom * scale.Height;
+			//signal values for rect top and rect bottom
+			double maxValue = DtoW_Y(0.0, rectWindow, scale);
+			double minValue = DtoW_Y(rectWindow.Height, rectWindow, scale);
 
-			//double minValue = maxY
+			List<double> roundValues = new List<double>();
 
-			double cur_y = rectWindow.Bottom - rectWindow.Top;
-			while (cur_y > 0.0)
+			if (maxValue <= 0 && minValue <= 0)
 			{
-				yAxisBarsYs.Add(cur_y);
-				cur_y -= MIN_BAR_DIST_Y;
+				for (double value = 0.0; value > minValue; value -= dist)
+					if (value >= minValue && value <= maxValue)
+						roundValues.Add(value);
 			}
+			else if (maxValue > 0 && minValue < 0)
+			{
+				for (double value = dist; value < maxValue; value += dist)
+					if (value >= minValue && value <= maxValue)
+						roundValues.Add(value);
+
+				roundValues.Add(0.0);
+
+				for (double value = -dist; value > minValue; value -= dist)
+					if (value >= minValue && value <= maxValue)
+						roundValues.Add(value);
+			}
+			else if (maxValue >= 0 && minValue >= 0)
+			{
+				for (double value = 0.0; value < maxValue; value += dist)
+					if (value >= minValue && value <= maxValue)
+						roundValues.Add(value);
+			}
+
+			roundValues = roundValues.OrderBy(v => v).ToList();
+
+			yAxisBarsYs = roundValues
+				.Select(v => WtoD_Y(v, rectWindow, scale))
+				.ToList();
 
 			//creating texts using Ys
 			var texts = new List<FormattedText>();
-			foreach (var y in yAxisBarsYs)
+			for (int i = 0; i < yAxisBarsYs.Count; ++i)
 			{
-				var yValue = (rectWindow.Bottom - y) / scale.Height;
-				var ft = GetTextField(yValue.ToString("G4"));
+				var ft = GetTextField(roundValues[i].ToString("G4"));
 				texts.Add(ft);
 			}
 			double maxTextWidth = texts.Count > 0 ? texts.Max(t => t.Width) : 0;
@@ -176,9 +232,20 @@ namespace MDP_PPG.ViewModels
 						new Point(0.0, y), new Point(rectWindow.Width, y)
 					)
 				);
-			}			
+			}
 			#endregion
 		}
+		private double WtoD_Y(double y, Rect rectWindow, Size scale) =>
+			rectWindow.Height - (y * scale.Height - rectWindow.Top);
+		private double WtoD_X(double x, Rect rectWindow, Size scale) =>
+			x * scale.Width - rectWindow.Left;
+		private double DtoW_Y(double y, Rect rectWindow, Size scale) =>
+			(rectWindow.Height + rectWindow.Top - y) / scale.Height;
+		private double DtoW_X(double x, Rect rectWindow, Size scale) =>
+			(x + rectWindow.Left) / scale.Width;
+		private PlotDataPoint[] DrawnPoints = new PlotDataPoint[0];
+		private double Dist2(Point p1, Point p2) => 
+			Math.Pow(p1.X - p2.X, 2) + Math.Pow(p1.Y - p2.Y, 2);
 
 		private const double X_AXIS_Y = 10.0;
 		private const double X_AXIS_BAR_TOP = 5.0;

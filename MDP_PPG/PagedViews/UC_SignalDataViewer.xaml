@@ -73,14 +73,6 @@
             <TextBlock Text="{Binding Plot.SizeInfo}"
                        Margin="3"
                        FontWeight="Bold"/>
-
-            <Border BorderThickness="2"
-                    BorderBrush="LightGray">
-
-                <TextBlock Text="{Binding MousePos}"
-                       Margin="3"/>
-
-            </Border>
         </StackPanel>
 
         <ContentControl Style="{StaticResource infoContent}"
@@ -115,7 +107,7 @@
                       HorizontalAlignment="Right">
                     <Path Data="{Binding Plot.Y_Axis}"
                               Stroke="Black"
-                              StrokeThickness="2"
+                              StrokeThickness="1"
                               SnapsToDevicePixels="True"/>
                 </Grid>
 
@@ -131,7 +123,7 @@
                       PreviewMouseWheel="Plot_PreviewMouseWheel">
 
                     <Polyline Points="{Binding Plot.PlotPoints}"
-                                Stroke="OrangeRed"
+                                Stroke="Green"
                                 StrokeThickness="3"
                                 SnapsToDevicePixels="True"
                                 HorizontalAlignment="Left"
@@ -139,6 +131,12 @@
 
                     <Path Data="{Binding Plot.PlotGrid}" 
                             Stroke="Gray" 
+                            StrokeThickness="1"
+                            SnapsToDevicePixels="True"
+                            HorizontalAlignment="Left"/>
+
+                    <Path Data="{Binding Plot.HighLightedPoint}" 
+                            Stroke="OrangeRed" 
                             StrokeThickness="1"
                             SnapsToDevicePixels="True"
                             HorizontalAlignment="Left"/>
@@ -153,7 +151,7 @@
 
                     <Path Data="{Binding Plot.X_Axis}"
                               Stroke="Black"
-                              StrokeThickness="2"
+                              StrokeThickness="1"
                               SnapsToDevicePixels="True"/>
                     
                 </Grid>

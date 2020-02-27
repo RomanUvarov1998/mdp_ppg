@@ -32,6 +32,7 @@ namespace MDP_PPG.ViewModels
 
 		private Size CurrentScale;
 		private Rect RectWindow;
+		private Point MousePos;
 
 		public double X_Range => SignalContainer.X_Range;
 		public double Y_Range => SignalContainer.Y_Range;
@@ -59,11 +60,23 @@ namespace MDP_PPG.ViewModels
 			PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(PlotGrid)));
 		}
 
-		public string GetDataPositionMessage(Point mousePosition)
+		public void HighLightPointNearestTo(Point mousePosition)
 		{
-			var p = SignalContainer.GetPoint(mousePosition, RectWindow, CurrentScale);
+			HighLightedPoint = new GeometryGroup();
+			MousePos = mousePosition;
 
-			return $"{p.X.ToString("G4")} с, {p.Y.ToString("G4")}";
+			SignalContainer.HighLightPointNearestTo(mousePosition, RectWindow, CurrentScale, HighLightedPoint);
+
+			PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(HighLightedPoint)));
+		}
+		public void RefreshHighlightedPoint()
+		{
+			HighLightPointNearestTo(MousePos);
+		}
+		public void ClearHighlightedPoint()
+		{
+			HighLightedPoint = new GeometryGroup();
+			PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(HighLightedPoint)));
 		}
 
 		public void SetYScale(double newValue)
@@ -91,6 +104,7 @@ namespace MDP_PPG.ViewModels
 		public GeometryGroup PlotGrid { get; set; } = new GeometryGroup();
 		public GeometryGroup X_Axis { get; set; } = new GeometryGroup();
 		public GeometryGroup Y_Axis { get; set; } = new GeometryGroup();
+		public GeometryGroup HighLightedPoint { get; set; } = new GeometryGroup();
 
 
 		public event PropertyChangedEventHandler PropertyChanged;
