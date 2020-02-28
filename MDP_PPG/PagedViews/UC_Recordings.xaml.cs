@@ -1,4 +1,5 @@
 ﻿using MDP_PPG.EntitiesEditing;
+using MDP_PPG.SignalAnalisys;
 using MDP_PPG.ViewModels;
 using PPG_Database.KeepingModels;
 using System;
@@ -102,6 +103,14 @@ namespace MDP_PPG.PagedViews
 		{
 			PropertyChanged?.Invoke(PagedView, new PropertyChangedEventArgs(nameof(PagedView.CanGoPrevPage)));
 			PropertyChanged?.Invoke(PagedView, new PropertyChangedEventArgs(nameof(PagedView.CanGoNextPage)));
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BtnAnalyseIsEnabled)));
+		}
+
+		public bool BtnAnalyseIsEnabled => PagedView.SelectedItem?.Instance != null;
+		private void Btn_Analisys_Click(object sender, RoutedEventArgs e)
+		{
+			var dlg = new W_SignalAnalyser(PagedView.SelectedItem.Instance.SignalData);
+			dlg.ShowDialog();
 		}
 	}
 }

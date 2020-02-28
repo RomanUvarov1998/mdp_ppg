@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MDP_PPG.EntitiesEditing"
         mc:Ignorable="d"
-        Title="W_EditPatient" Height="450" Width="800" SizeToContent="WidthAndHeight" ResizeMode="NoResize">
+        Title="Пациент" Height="450" Width="800" SizeToContent="WidthAndHeight" ResizeMode="NoResize">
     
     <Grid Width="auto" Height="auto">
         <Grid.RowDefinitions>

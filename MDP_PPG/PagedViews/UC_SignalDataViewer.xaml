@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:MDP_PPG.PagedViews"
+             xmlns:sa="clr-namespace:MDP_PPG.SignalAnalisys"
              xmlns:gif="http://wpfanimatedgif.codeplex.com"
              xmlns:convs="clr-namespace:MDP_PPG.Converters"
              mc:Ignorable="d" 
@@ -53,11 +54,13 @@
     <Grid>
 
         <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="auto"/>
             <ColumnDefinition Width="150"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <StackPanel IsEnabled="{Binding IsInterfaceEnabled}">
+        <StackPanel Grid.Column="1"
+                    IsEnabled="{Binding IsInterfaceEnabled}">
             <TextBlock Text="Масштаб по времени"
                        Margin="3"/>
             <TextBox Text="{Binding SampleWidthStr, UpdateSourceTrigger=PropertyChanged}"
@@ -76,7 +79,7 @@
         </StackPanel>
 
         <ContentControl Style="{StaticResource infoContent}"
-                        Grid.Column="1"
+                        Grid.Column="2"
                         SnapsToDevicePixels="True"
                         Margin="10">
 
@@ -103,7 +106,7 @@
                            Maximum="{Binding Max_Y}"
                            Value="{Binding ScrollValue_Y, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                            ViewportSize="{Binding Y_Axis_ViewportSize}"/>
-                
+
                 <Grid Grid.Row="0" Grid.Column="1"
                       Background="White"
                       HorizontalAlignment="Right">
@@ -114,12 +117,12 @@
                 </Grid>
 
                 <!-- Plot -->
+                <!--Clip="{Binding PlotClip}"-->
                 <Grid Grid.Row="0" Grid.Column="2"
                       Background="White"
                       x:Name="plotGrid"
                       VerticalAlignment="Stretch"
                       HorizontalAlignment="Stretch"
-                      Clip="{Binding PlotClip}"
                       MouseMove="Plot_MouseMove"
                       MouseLeave="Plot_MouseLeave"
                       PreviewMouseWheel="Plot_PreviewMouseWheel"
@@ -156,7 +159,7 @@
 
                 </Grid>
 
-                    <!-- X Axis -->
+                <!-- X Axis -->
                 <Grid Grid.Row="1" Grid.Column="2"
                       Background="White"
                       VerticalAlignment="Stretch"
@@ -166,7 +169,7 @@
                               Stroke="Black"
                               StrokeThickness="1"
                               SnapsToDevicePixels="True"/>
-                    
+
                 </Grid>
                 <ScrollBar Grid.Row="2" Grid.Column="2"
                            Orientation="Horizontal"

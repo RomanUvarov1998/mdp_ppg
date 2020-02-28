@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:MDP_PPG.EntitiesEditing"
         xmlns:km="clr-namespace:PPG_Database.KeepingModels;assembly=PPG_Database"
         mc:Ignorable="d"
-        Title="W_EditRecordings" Height="450" Width="800" SizeToContent="WidthAndHeight" ResizeMode="NoResize">
+        Title="Запись" Height="450" Width="800" SizeToContent="WidthAndHeight" ResizeMode="NoResize">
 
     <Grid IsEnabled="{Binding IsGUIEnabled}">
 

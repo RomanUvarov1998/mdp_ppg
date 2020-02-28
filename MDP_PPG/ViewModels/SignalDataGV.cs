@@ -25,7 +25,7 @@ namespace MDP_PPG.ViewModels
 
 			SignalContainer.SetData(values, 250.0, PixelsPerDip);
 
-			PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(SizeInfo)));
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SizeInfo)));
 		}
 
 		private SignalContainer SignalContainer = new SignalContainer();
@@ -63,10 +63,10 @@ namespace MDP_PPG.ViewModels
 				Y_Axis, 
 				RectWindow, CurrentScale);
 
-			PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(PlotPoints)));
-			PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(X_Axis)));
-			PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(Y_Axis)));
-			PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(PlotGrid)));
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PlotPoints)));
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(X_Axis)));
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Y_Axis)));
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PlotGrid)));
 		}
 
 		public void HighLightPointNearestTo(Point mousePosition)
@@ -77,8 +77,8 @@ namespace MDP_PPG.ViewModels
 
 			SignalContainer.HighLightPointNearestTo(mousePosition, RectWindow, HighLightedPoint, HighLightedPointText);
 
-			PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(HighLightedPoint)));
-			PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(HighLightedPointText)));
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HighLightedPoint)));
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HighLightedPointText)));
 		}
 		public void RefreshHighlightedPoint()
 		{
@@ -88,8 +88,8 @@ namespace MDP_PPG.ViewModels
 		{
 			HighLightedPoint = new GeometryGroup();
 			HighLightedPointText = new GeometryGroup();
-			PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(HighLightedPoint)));
-			PropertyChanged.Invoke(this, new PropertyChangedEventArgs(nameof(HighLightedPointText)));
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HighLightedPoint)));
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HighLightedPointText)));
 		}
 
 		public void SetYScale(double newValue)

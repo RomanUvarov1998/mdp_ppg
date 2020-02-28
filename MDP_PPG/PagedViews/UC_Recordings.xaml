@@ -82,6 +82,11 @@
                     </Image.Source>
                 </Image>
             </Button>
+
+            <Button Content="Анализ"
+                    Click="Btn_Analisys_Click"
+                    IsEnabled="{Binding BtnAnalyseIsEnabled}"/>
+
         </WrapPanel>
 
         <ListView Grid.Row="1" 

@@ -196,13 +196,20 @@ namespace MDP_PPG.PagedViews
 			{
 				Dispatcher.Invoke(delegate
 				{
-					Plot = new SignalDataGV(PixelsPerDip);
-					Plot.SetData(sd);
-					OnWindowResized();
+					GiveData(sd);
 				});
 			}
 
 			IsLoadingData = false;
+		}
+		public void GiveData(SignalData sd)
+		{
+			if (sd != null)
+			{
+				Plot = new SignalDataGV(PixelsPerDip);
+				Plot.SetData(sd);
+				OnWindowResized();
+			}
 		}
 		public void OnWindowResized()
 		{
