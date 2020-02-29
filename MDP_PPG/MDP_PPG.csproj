@@ -84,6 +84,7 @@
     <Compile Include="EntitiesEditing\W_EditRecordings.xaml.cs">
       <DependentUpon>W_EditRecordings.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Helpers\MainFunctions.cs" />
     <Compile Include="MySettings.cs" />
     <Compile Include="PagedViews\IManagablePagedView.cs" />
     <Compile Include="PagedViews\ICanDoFilteredSearch.cs" />

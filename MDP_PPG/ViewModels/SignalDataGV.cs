@@ -1,4 +1,5 @@
-﻿using PPG_Database.KeepingModels;
+﻿using MDP_PPG.Helpers;
+using PPG_Database.KeepingModels;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -17,13 +18,16 @@ namespace MDP_PPG.ViewModels
 		}
 		private double PixelsPerDip;
 
-		public void SetData(SignalData instance)
+		public void SetData(SignalData instance, Size currentScale)
 		{
 			Instance = instance ?? throw new ArgumentNullException();
 
-			double[] values = instance.Data.Select(d => 0.0 + d).ToArray();
+			int[] valuesInt =	MainFunctions.GetFromBytesAsInts(instance.Data);
+
+			double[] values = valuesInt.Select(d => 0.0 + d).ToArray();
 
 			SignalContainer.SetData(values, 250.0, PixelsPerDip);
+			CurrentScale = currentScale;
 
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SizeInfo)));
 		}

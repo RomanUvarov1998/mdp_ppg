@@ -207,7 +207,8 @@ namespace MDP_PPG.PagedViews
 			if (sd != null)
 			{
 				Plot = new SignalDataGV(PixelsPerDip);
-				Plot.SetData(sd);
+				Plot.SetData(sd, CurrentScale);
+				plotGrid.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
 				OnWindowResized();
 			}
 		}
