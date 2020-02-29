@@ -117,7 +117,6 @@
                 </Grid>
 
                 <!-- Plot -->
-                <!--Clip="{Binding PlotClip}"-->
                 <Grid Grid.Row="0" Grid.Column="2"
                       Background="White"
                       x:Name="plotGrid"
@@ -128,6 +127,7 @@
                       PreviewMouseWheel="Plot_PreviewMouseWheel"
                       MouseDown="Plot_MouseDown"
                       MouseUp="Plot_MouseUp"
+                      Clip="{Binding PlotClip}"
                       Cursor="{Binding PlotCursor}"
                       MinWidth="100"
                       MinHeight="100">

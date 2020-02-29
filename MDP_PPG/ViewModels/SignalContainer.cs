@@ -165,7 +165,7 @@ namespace MDP_PPG.ViewModels
 
 				for (int i = firstDistNum; i < DrawnPoints.Length; i += samplesPerDist)
 				{
-					var x = DrawnPoints[i].DisplayPoint.X;
+					double x = DrawnPoints[i].DisplayPoint.X;
 					xAxisBarsXs.Add(x);
 
 					x_Axis.Children.Add(GetVerticalBarFor_X(x));

@@ -341,8 +341,8 @@ namespace MDP_PPG.PagedViews
 			Rect curRect = RectWindow;
 			Size plotScaledSize = Plot.AllPlotSize_Scaled;
 
-			Max_X = Math.Max(0.0, plotScaledSize.Width - curRect.Width);
-			Max_Y = Math.Max(0.0, plotScaledSize.Height - curRect.Height);
+			Max_X = Math.Max(0.0, plotScaledSize.Width - curRect.Width) + 50;
+			Max_Y = Math.Max(0.0, plotScaledSize.Height - curRect.Height) + 50;
 
 			X_Axis_ViewportSize = curRect.Width;
 			Y_Axis_ViewportSize = curRect.Height;
