@@ -134,6 +134,14 @@ namespace MDP_PPG.EntitiesEditing
 				return;
 			}
 
+			if (data.Length <= 0)
+			{
+				MessageBox.Show("Данный файл является пустым, поэтому его нельзя загрузить", "Файл пуст", MessageBoxButton.OK, MessageBoxImage.Error);
+				DataLoadingMessage = "Выбранный файл пуст, выберите другой файл";
+				DataFileIsLoaded = false;
+				return;
+			}
+
 			Instance.SignalData = new SignalData(data, Instance.Id);
 			DataLoadingMessage = "Файл успешно заружен";
 			DataFileIsLoaded = true;
