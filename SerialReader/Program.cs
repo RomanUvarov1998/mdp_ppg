@@ -11,10 +11,8 @@ public class PortChat
 
   public static void Main()
   {
-    //string name;
     string message;
     StringComparer stringComparer = StringComparer.OrdinalIgnoreCase;
-    //Thread readThread = new Thread(Read);
 
     // Create a new SerialPort object with default settings.
     _serialPort = new SerialPort();
@@ -35,10 +33,6 @@ public class PortChat
 
     _serialPort.Open();
     _continue = true;
-    //readThread.Start();
-
-    //Console.Write("Name: ");
-    //name = Console.ReadLine();
 
     Console.WriteLine("Type QUIT to exit");
 
@@ -56,7 +50,6 @@ public class PortChat
       }
     }
 
-    //readThread.Join();
     _serialPort.Close();
   }
 
