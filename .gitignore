@@ -7,3 +7,5 @@ PPG_Database/obj
 *.g.i.cs
 packages/
 Recording_Files/
+SerialReader/obj
+SerialReader/bin
