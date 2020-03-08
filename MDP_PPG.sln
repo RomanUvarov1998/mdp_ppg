@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MDP_PPG", "MDP_PPG\MDP_PPG.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PPG_Database", "PPG_Database\PPG_Database.csproj", "{9AE82AAA-3F3A-4B09-8C74-CB6244275D83}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SerialReader", "SerialReader\SerialReader.csproj", "{533AE158-2AC2-47FC-A414-9BC9A31D02F9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{9AE82AAA-3F3A-4B09-8C74-CB6244275D83}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9AE82AAA-3F3A-4B09-8C74-CB6244275D83}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9AE82AAA-3F3A-4B09-8C74-CB6244275D83}.Release|Any CPU.Build.0 = Release|Any CPU
+		{533AE158-2AC2-47FC-A414-9BC9A31D02F9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{533AE158-2AC2-47FC-A414-9BC9A31D02F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{533AE158-2AC2-47FC-A414-9BC9A31D02F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{533AE158-2AC2-47FC-A414-9BC9A31D02F9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,0 +1,6 @@
+C:\Users\Рома\Dropbox\4й курс\8й семестр\__МДП\MDP_PPG\SerialReader\bin\Debug\SerialReader.exe.config
+C:\Users\Рома\Dropbox\4й курс\8й семестр\__МДП\MDP_PPG\SerialReader\bin\Debug\SerialReader.exe
+C:\Users\Рома\Dropbox\4й курс\8й семестр\__МДП\MDP_PPG\SerialReader\bin\Debug\SerialReader.pdb
+C:\Users\Рома\Dropbox\4й курс\8й семестр\__МДП\MDP_PPG\SerialReader\obj\Debug\SerialReader.csprojAssemblyReference.cache
+C:\Users\Рома\Dropbox\4й курс\8й семестр\__МДП\MDP_PPG\SerialReader\obj\Debug\SerialReader.exe
+C:\Users\Рома\Dropbox\4й курс\8й семестр\__МДП\MDP_PPG\SerialReader\obj\Debug\SerialReader.pdb
