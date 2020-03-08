@@ -127,6 +127,7 @@ public class PortChat
         MyLog($" - {bytePos} {b}");
         ReadBuffer[bytePos] = (byte)b;
         bytePos++;
+        ApproveGettingValue(0);
       }
 
       if (bytePos >= ReadBuffer.Length)
@@ -154,7 +155,7 @@ public class PortChat
           if (!RecievedValues.ContainsKey(frameNum))
           {
             RecievedValues.Add(frameNum, value);
-            //Console.WriteLine($"Got №{frameNum} '{value}'");
+            MyLog($"Got №{frameNum} '{value}'");
             Console.WriteLine($"{100 * RecievedValues.Count / SignalLength}% done");
           }
           else if (frameNum > SignalLength)
@@ -191,6 +192,6 @@ public class PortChat
 
   private static void MyLog(string s)
   {
-    Console.WriteLine(s);
+    //Console.WriteLine(s);
   }
 }
