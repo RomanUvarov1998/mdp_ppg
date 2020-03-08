@@ -1,3 +1,5 @@
+SerialReader/obj
+SerialReader/bin
 MDP_PPG/bin
 MDP_PPG/obj
 PPG_Database/bin
@@ -7,5 +9,3 @@ PPG_Database/obj
 *.g.i.cs
 packages/
 Recording_Files/
-SerialReader\obj
-SerialReader\bin
