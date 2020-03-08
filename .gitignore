@@ -7,5 +7,5 @@ PPG_Database/obj
 *.g.i.cs
 packages/
 Recording_Files/
-SerialReader/obj/Debug
-SerialReader/bin/Debug
+SerialReader\obj
+SerialReader\bin
