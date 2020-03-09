@@ -30,8 +30,8 @@ public class PortChat
     _serialPort.WriteTimeout = SerialPort.InfiniteTimeout;
 
     _serialPort.DataReceived += _serialPort_DataReceived;
-
     _serialPort.Open();
+
     _continue = true;
 
     Console.WriteLine("Type QUIT to exit");
@@ -52,63 +52,29 @@ public class PortChat
 
     _serialPort.Close();
   }
-
-  private static Dictionary<UInt32, UInt16> RecievedValues = new Dictionary<UInt32, UInt16>();
-
-
-  private static int bytePos = 0;
-  private static byte[] ReadBuffer = new byte[7];
-  private static UInt32 SignalLength;
-  private static MessageTypes GetMessageType()
-  {
-    Byte t = (Byte)BitConverter.ToUInt16(ReadBuffer, 0);
-    switch (t)
-    {
-      case (Byte)MessageTypes.BEFORE_TX:   return MessageTypes.BEFORE_TX;
-      case (Byte)MessageTypes.SIGNAL_LENGTH: return MessageTypes.SIGNAL_LENGTH;
-      case (Byte)MessageTypes.DATA: return MessageTypes.DATA;
-      case (Byte)MessageTypes.APPROVING:  return MessageTypes.APPROVING;
-      case (Byte)MessageTypes.DONE:  return MessageTypes.DONE;
-      default: throw new Exception("Wrong frame type ((((");
-    }
-  }
-  enum MessageTypes : Byte
-  {
-    BEFORE_TX = 1,
-    SIGNAL_LENGTH = 2,
-    DATA = 3,
-    APPROVING = 4,
-    DONE = 5
-  }
-
-
-  //Get Signal Value
-  //0: type, 1-4: frame number, 5-6: value
-  private static UInt32 GetFrameNum() => BitConverter.ToUInt32(ReadBuffer, 1);
-  private static UInt16 GetValue() => BitConverter.ToUInt16(ReadBuffer, 5);
-
-
-  //Get Approving Message
-  //0: type, 1-4: frame number, 5-6: nothing  
-  private static UInt32 GetApprovingFrameNum() => BitConverter.ToUInt32(ReadBuffer, 1);
-
-
-  //Get Signal Size
-  //0: type, 1-4: signal size, 5-6: nothing
-  private static UInt32 GetSignalLength() => BitConverter.ToUInt32(ReadBuffer, 1);
-
-
-  private static void ApproveGettingValue(UInt32 frameNum)
-  {
-    MyLog($"! {frameNum}");
-    _serialPort.Write(new byte[] { 51 }, 0, 1);
-  }
   private static void BeginTransmitting()
   {
     MyLog("Begin transmitting");
     MyLog("Got: ");
+    StateTx = StatesTx.SIGNAL_LENGTH_01;
     _serialPort.Write(new byte[] { 49 }, 0, 1);//49
   }
+
+  private static UInt16[] RecievedValues;
+  private static UInt32 ValueNum = 0;
+
+  private static int bytePos = 0;
+  private static byte[] ReadBuffer = new byte[2];
+  private static UInt32 SignalLength;
+  enum StatesTx : Byte
+  {
+    BEFORE_TX = 0,
+    SIGNAL_LENGTH_01 = 1,
+    SIGNAL_LENGTH_23 = 2,
+    DATA = 3,
+    END = 4,
+  }
+  private static StatesTx StateTx;
 
   private static void _serialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
   {
@@ -120,7 +86,7 @@ public class PortChat
         MyLog($" - {bytePos} {b}");
         ReadBuffer[bytePos] = (byte)b;
         bytePos++;
-        ApproveGettingValue(0);
+        _serialPort.Write(new byte[] { 51 }, 0, 1);
       }
 
       if (bytePos >= ReadBuffer.Length)
@@ -128,61 +94,48 @@ public class PortChat
         bytePos = 0;
       }
       else return;
-
-      MyLog("");
-
-      UInt16 value;
-      UInt32 frameNum;
-      MessageTypes messageType = GetMessageType();
-      MyLog($"State is '{messageType}'");
-      switch (messageType)
+            
+      MyLog($"State is '{StateTx}'");
+      switch (StateTx)
       {
-        case MessageTypes.SIGNAL_LENGTH:
-          SignalLength = GetSignalLength();
+        case StatesTx.SIGNAL_LENGTH_01:
+          SignalLength = BitConverter.ToUInt16(ReadBuffer, 0);
+          StateTx = StatesTx.SIGNAL_LENGTH_23;
+          MyLog("");
+          break;
+        case StatesTx.SIGNAL_LENGTH_23:
+          SignalLength |= ((UInt32)BitConverter.ToUInt16(ReadBuffer, 0) << 16);
           MyLog($"Signal length is '{SignalLength}'");
+          RecievedValues = new UInt16[SignalLength];
+          StateTx = StatesTx.DATA;
+          MyLog("");
           break;
-        case MessageTypes.DATA:
-          value = GetValue();
-          frameNum = GetFrameNum();
+        case StatesTx.DATA:
+          UInt16 value = BitConverter.ToUInt16(ReadBuffer, 0);
+          Console.WriteLine($"Got '{value}': {ValueNum + 1}/{SignalLength}");
+          RecievedValues[ValueNum] = value;
+          checked { ++ValueNum; }
+          MyLog("");
+          _serialPort.Write(new byte[] { 51 }, 0, 1);
 
-          if (!RecievedValues.ContainsKey(frameNum))
+          if (ValueNum >= SignalLength)
           {
-            RecievedValues.Add(frameNum, value);
-            MyLog($"Got №{frameNum} '{value}'");
-            Console.WriteLine($"{100 * RecievedValues.Count / SignalLength}% done");
-          }
-          else if (frameNum > SignalLength)
-          {
-            Console.Write($"{frameNum} is more than {SignalLength}!!!");
-          }
-          else
-          {
-            Console.Write($"Already have №{frameNum} '{value}'!!!");
-          }
-          break;
-        case MessageTypes.APPROVING:
-          frameNum = GetApprovingFrameNum();
-          if (RecievedValues.ContainsKey(frameNum))
-          {
-            ApproveGettingValue(frameNum);
-          }
-          break;
-        case MessageTypes.DONE:
-          SortedDictionary<UInt32, UInt16> sd = new SortedDictionary<uint, ushort>(RecievedValues);
-          UInt16[] values = sd.Values.ToArray();
+            StateTx = StatesTx.END;
+            _serialPort.Close();
 
-          MyLog($"Values: {values.Length}");
+            Console.WriteLine($"Values: {RecievedValues.Length}");
 
-          string s = Console.ReadLine();
+            string s = Console.ReadLine();
 
-          for (int i = 0; i < values.Length; ++i)
-            MyLog($" {values[i]}");
+            for (int i = 0; i < RecievedValues.Length; ++i)
+              Console.WriteLine($" {RecievedValues[i]}");
+          }
           break;
       }
     }
     catch (TimeoutException) { }
   }
-
+  
   private static void MyLog(string s)
   {
     //Console.WriteLine(s);
