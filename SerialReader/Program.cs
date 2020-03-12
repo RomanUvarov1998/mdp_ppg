@@ -1,13 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO.Ports;
-using System.Linq;
-using System.Threading;
 
 public class PortChat
 {
   static bool _continue;
   static SerialPort _serialPort;
+  //static DateTime StartTime;
 
   public static void Main()
   {
@@ -57,6 +55,7 @@ public class PortChat
     MyLog("Begin transmitting");
     MyLog("Got: ");
     StateTx = StatesTx.SIGNAL_LENGTH_01;
+    //StartTime = DateTime.Now;
     _serialPort.Write(new byte[] { 49 }, 0, 1);//49
   }
 
@@ -80,60 +79,64 @@ public class PortChat
   {
     try
     {
-      if (bytePos < ReadBuffer.Length)
+      while (_serialPort.BytesToRead > 0)
       {
-        int b = _serialPort.ReadByte();
-        MyLog($" - {bytePos} {b}");
+        int b = _serialPort.ReadByte(); MyLog($" - {bytePos} {b}");
         ReadBuffer[bytePos] = (byte)b;
         bytePos++;
-        _serialPort.Write(new byte[] { 51 }, 0, 1);
-      }
 
-      if (bytePos >= ReadBuffer.Length)
-      {
+        if (bytePos < ReadBuffer.Length) continue;
+
         bytePos = 0;
-      }
-      else return;
-            
-      MyLog($"State is '{StateTx}'");
-      switch (StateTx)
-      {
-        case StatesTx.SIGNAL_LENGTH_01:
-          SignalLength = BitConverter.ToUInt16(ReadBuffer, 0);
-          StateTx = StatesTx.SIGNAL_LENGTH_23;
-          MyLog("");
-          break;
-        case StatesTx.SIGNAL_LENGTH_23:
-          SignalLength |= ((UInt32)BitConverter.ToUInt16(ReadBuffer, 0) << 16);
-          MyLog($"Signal length is '{SignalLength}'");
-          RecievedValues = new UInt16[SignalLength];
-          StateTx = StatesTx.DATA;
-          MyLog("");
-          break;
-        case StatesTx.DATA:
-          UInt16 value = BitConverter.ToUInt16(ReadBuffer, 0);
-          Console.WriteLine($"Got '{value}': {ValueNum + 1}/{SignalLength}");
-          RecievedValues[ValueNum] = value;
-          checked { ++ValueNum; }
-          MyLog("");
-          _serialPort.Write(new byte[] { 51 }, 0, 1);
 
-          if (ValueNum >= SignalLength)
-          {
-            StateTx = StatesTx.END;
-            _serialPort.Close();
-
-            Console.WriteLine($"Values: {RecievedValues.Length}");
-
-            string s = Console.ReadLine();
-
-            for (int i = 0; i < RecievedValues.Length; ++i)
-              Console.WriteLine($" {RecievedValues[i]}");
-          }
-          break;
+        ProcessBuffer();
       }
     }
     catch (TimeoutException) { }
+  }
+
+  private static void ProcessBuffer()
+  {
+    MyLog($"State is '{StateTx}'");
+    switch (StateTx)
+    {
+      case StatesTx.SIGNAL_LENGTH_01:
+        SignalLength = BitConverter.ToUInt16(ReadBuffer, 0);
+        StateTx = StatesTx.SIGNAL_LENGTH_23;
+        MyLog("");
+        break;
+      case StatesTx.SIGNAL_LENGTH_23:
+        SignalLength |= ((UInt32)BitConverter.ToUInt16(ReadBuffer, 0) << 16);
+        MyLog($"Signal length is '{SignalLength}'");
+        RecievedValues = new UInt16[SignalLength];
+        StateTx = StatesTx.DATA;
+        MyLog("");
+        break;
+      case StatesTx.DATA:
+        UInt16 value = BitConverter.ToUInt16(ReadBuffer, 0);
+        Console.WriteLine($"Got '{value}': {ValueNum + 1}/{SignalLength}");
+        RecievedValues[ValueNum] = value;
+        checked { ++ValueNum; }
+        MyLog("");
+        _serialPort.Write(new byte[] { 51 }, 0, 1);
+
+        if (ValueNum >= SignalLength)
+        {
+          StateTx = StatesTx.END;
+          _serialPort.Close();
+
+          Console.WriteLine($"Values: {RecievedValues.Length}");
+
+          //TimeSpan ts = DateTime.Now - StartTime;
+          //Console.WriteLine($"Elapsed time: {ts.TotalMilliseconds.ToString("G4")}");
+
+          string s = Console.ReadLine();
+
+          for (int i = 0; i < RecievedValues.Length; ++i)
+            Console.WriteLine($" {RecievedValues[i]}");
+        }
+        break;
+    }
   }
   
   private static void MyLog(string s)
