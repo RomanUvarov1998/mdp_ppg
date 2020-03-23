@@ -22,9 +22,7 @@ namespace MDP_PPG.ViewModels
 		{
 			Instance = instance ?? throw new ArgumentNullException();
 
-			int[] valuesInt =	MainFunctions.GetFromBytesAsInts(instance.Data);
-
-			double[] values = valuesInt.Select(d => 0.0 + d).ToArray();
+			double[] values = MainFunctions.FromDatabaseToAnalysis(instance.Data);
 
 			SignalContainer.SetData(values, 250.0, PixelsPerDip);
 			CurrentScale = currentScale;

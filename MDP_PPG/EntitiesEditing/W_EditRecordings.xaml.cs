@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using MDP_PPG.Helpers;
+using System.IO.Ports;
 
 namespace MDP_PPG.EntitiesEditing
 {
@@ -23,131 +24,47 @@ namespace MDP_PPG.EntitiesEditing
 
 			InitializeComponent();
 
-			string recordingDateTimeStr = 
-				instance.Id == 0 ? 
-				DateTime.Now.ToString(Recording.DATE_TIME_FORMAT) : 
+			string recordingDateTimeStr =
+				instance.Id == 0 ?
+				DateTime.Now.ToString(Recording.DATE_TIME_FORMAT) :
 				instance.RecordingDateTime.ToString(Recording.DATE_TIME_FORMAT);
 
 			vtbRecordingDateTime.SetValues(recordingDateTimeStr, ValidateRecordingDateTime, s => s, SetBtnOkEnabled);
+
+			F_SignalReader = new SignalFileReader(
+				(s, b) => { FileMessage = s; DataFileIsLoaded = b; }, SetSignalData, arg => IsLoadingData = arg);
+			MC_SignalReader = new SignalPortReader(
+				(s, b) => { PortMessage = s; DataFileIsLoaded = b; }, SetSignalData, arg => IsLoadingData = arg);
 
 			DataContext = this;
 
 			CheckForExistingData();
 		}
 
-		private async void CheckForExistingData()
+
+		//---------------------------- GUI Props ----------------------------------------
+
+		public string FileMessage
 		{
-			int c;
-
-			using (var context = new PPG_Context())
-			{
-				c = await context.SignalDatas.CountAsync(d => d.RecordingId == Instance.Id);
-			}
-
-			if (c == 0)
-			{
-				DataLoadingMessage = "Нет загруженного файла записи";
-				DataFileIsLoaded = false;
-			}
-			else
-			{
-				DataLoadingMessage = "Есть файл записи";
-				DataFileIsLoaded = true;
-			}
-
-			IsLoadingData = false;
-		}
-
-
-		private Recording Instance { get; set; }
-		public Recording GetRecording()
-		{
-			Instance.RecordingDateTime = ParsedDateTime.Value;
-			return Instance;
-		}
-
-
-		private bool ValidateRecordingDateTime(string val)
-		{
-			bool res = DateTime.TryParseExact(val, Recording.DATE_TIME_FORMAT, CultureInfo.CurrentCulture, DateTimeStyles.None, out DateTime dt);
-			if (res) ParsedDateTime = dt;
-			return res;
-		}
-		private DateTime? ParsedDateTime;
-
-
-		private bool DataFileIsLoaded
-		{
-			get => dataFileIsLoaded;
+			get => fileMessage;
 			set
 			{
-				dataFileIsLoaded = value;
-				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DataFileIsLoaded)));
-				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BtnOkActive)));
+				fileMessage = value;
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(FileMessage)));
 			}
 		}
-		public string DataLoadingMessage
+		public string PortMessage
 		{
-			get => dataLoadingMessage;
+			get => portMessage;
 			set
 			{
-				dataLoadingMessage = value;
-				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DataLoadingMessage)));
+				portMessage = value;
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PortMessage)));
 			}
 		}
-		private void Btn_LoadRecording_Click(object sender, RoutedEventArgs e)
-		{
-			if (DataFileIsLoaded)
-			{
-				var res = MessageBox.Show("Файл записи уже загружен, загрузить другой?", "Файл записи", MessageBoxButton.YesNo, MessageBoxImage.Question);
-				if (res == MessageBoxResult.No) return;
-			}
-
-			OpenFileDialog openFileDialog = new OpenFileDialog();
-
-			string path;
-
-			if (openFileDialog.ShowDialog() == true)
-				path = openFileDialog.FileName;
-			else return;
-
-			byte[] data;
-
-			try
-			{
-				string[] lines = File.ReadAllLines(path);
-				data = MainFunctions.GetFromStringLines(lines);
-			}
-			catch (Exception ex)
-			{
-				MessageBox.Show(ex.Message, ex.Source);
-				DataLoadingMessage = "Ошибка чтения файла";
-				DataFileIsLoaded = false;
-				return;
-			}
-
-			if (data.Length <= 0)
-			{
-				MessageBox.Show("Данный файл является пустым, поэтому его нельзя загрузить", "Файл пуст", MessageBoxButton.OK, MessageBoxImage.Error);
-				DataLoadingMessage = "Выбранный файл пуст, выберите другой файл";
-				DataFileIsLoaded = false;
-				return;
-			}
-
-			Instance.SignalData = new SignalData(data, Instance.Id);
-			DataLoadingMessage = "Файл успешно заружен";
-			DataFileIsLoaded = true;
-		}
-
 
 		public bool BtnOkActive => vtbRecordingDateTime.AllowsSavingInput &&
 															 DataFileIsLoaded;
-		private void SetBtnOkEnabled()
-		{
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BtnOkActive)));
-		}
-
-
 		public bool IsLoadingData
 		{
 			get => isLoadingData;
@@ -159,6 +76,36 @@ namespace MDP_PPG.EntitiesEditing
 			}
 		}
 		public bool IsGUIEnabled => !IsLoadingData;
+
+		//---------------------------- GUI Event handlers -------------------------------
+
+		private void Btn_LoadRecording_FromFile_Click(object sender, RoutedEventArgs e)
+		{
+			F_SignalReader.TryRead();
+		}
+		private void Btn_LoadRecording_FromMC_Click(object sender, RoutedEventArgs e)
+		{
+			if (MC_SignalReader.SelectedPort == null)
+			{
+				PortMessage = "Выберите порт для передачи сигнала с микроконтроллера";
+				return;
+			}
+
+			if (!MC_SignalReader.CheckSelectedPortExists())
+			{
+				PortMessage = "Данный порт больше не существует, выберите другой порт";
+				return;
+			}
+
+			MC_SignalReader.TryRead();
+		}
+
+
+		private void Btn_refreshPortsList_Click(object sender, RoutedEventArgs e)
+		{
+			MC_SignalReader.RefreshPortsList();
+		}
+		
 
 		private void ButtonOk_OnClick(object _sender, RoutedEventArgs _e)
 		{
@@ -176,6 +123,9 @@ namespace MDP_PPG.EntitiesEditing
 				res = MessageBox.Show("Сохранить изменения?", "Сохранение изменений",
 					MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
 
+			F_SignalReader.TurnOff();
+			MC_SignalReader.TurnOff();
+
 			switch (res)
 			{
 				case MessageBoxResult.Yes:
@@ -191,12 +141,93 @@ namespace MDP_PPG.EntitiesEditing
 			}
 		}
 
+		//---------------------------- Other --------------------------------------------
+
+		private async void CheckForExistingData()
+		{
+			int c;
+
+			using (var context = new PPG_Context())
+			{
+				c = await context.SignalDatas.CountAsync(d => d.RecordingId == Instance.Id);
+			}
+
+			if (c == 0)
+			{
+				FileMessage = "Нет загруженного файла записи";
+				PortMessage = "Нет загруженного файла записи";
+				DataFileIsLoaded = false;
+			}
+			else
+			{
+				FileMessage = "Есть файл записи";
+				PortMessage = "Есть файл записи";
+				DataFileIsLoaded = true;
+			}
+
+			IsLoadingData = false;
+		}
+
+		private void NotifyGettingSignalStatus(string msg, bool isSuccess)
+		{
+			FileMessage = msg;
+			DataFileIsLoaded = isSuccess;
+		}
+		private void SetSignalData(byte[] bytes)
+		{
+			if (bytes.Length <= 0)
+			{
+				MessageBox.Show("Сигнал содержит нуль отсчетов, такой сигнал невозможно привязать к пациенту", "Сигнал пуст", MessageBoxButton.OK, MessageBoxImage.Error);
+				NotifyGettingSignalStatus("Данный сигнал пуст, попробуйте загрузить другой сигнал", false);
+				return;
+			}
+
+			Instance.SignalData = new SignalData(bytes, Instance.Id);
+		}
+
+
+		public SignalFileReader F_SignalReader { get; set; }
+		public SignalPortReader MC_SignalReader { get; set; }
+
+
+		private Recording Instance { get; set; }
+		public Recording GetRecording()
+		{
+			Instance.RecordingDateTime = ParsedDateTime.Value;
+			return Instance;
+		}
+
+		private bool ValidateRecordingDateTime(string val)
+		{
+			bool res = DateTime.TryParseExact(val, Recording.DATE_TIME_FORMAT, CultureInfo.CurrentCulture, DateTimeStyles.None, out DateTime dt);
+			if (res) ParsedDateTime = dt;
+			return res;
+		}
+		private DateTime? ParsedDateTime;
+
+		private bool DataFileIsLoaded
+		{
+			get => dataFileIsLoaded;
+			set
+			{
+				dataFileIsLoaded = value;
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DataFileIsLoaded)));
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BtnOkActive)));
+			}
+		}
+
+		private void SetBtnOkEnabled()
+		{
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BtnOkActive)));
+		}
+
 
 		public event PropertyChangedEventHandler PropertyChanged;
 
 
 		private bool dataFileIsLoaded = false;
-		private string dataLoadingMessage = "Проверка на существование файла записи...";
+		private string fileMessage = "Проверка на существование файла записи...";
+		private string portMessage = "Проверка на существование файла записи...";
 		private bool isLoadingData = true;
 	}
 }

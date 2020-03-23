@@ -38,13 +38,43 @@ public class PortChat
     {
       message = Console.ReadLine();
 
-      if (stringComparer.Equals("quit", message))
+      if (stringComparer.Equals("o", message))
       {
-        _continue = false;
-      } 
+        if (_serialPort.IsOpen) continue;
+        _serialPort.Open();
+        Console.WriteLine("Port opened");
+        //_continue = false;
+      }
+      else if (stringComparer.Equals("c", message))
+      {
+        if (!_serialPort.IsOpen) continue;
+        _serialPort.Close();
+        Console.WriteLine("Port closed");
+      }
       else if (stringComparer.Equals("b", message))
       {
+        if (!_serialPort.IsOpen)
+        {
+          Console.WriteLine("Port opened");
+          _serialPort.Open();
+        }
+
         BeginTransmitting();
+      }
+      else if (stringComparer.Equals("test", message))
+      {
+        bool res = true;
+        for (int i = 0; i < SignalLength; ++i)
+        {
+          if (i != RecievedValues[i])
+          {
+            res = false;
+            break;
+          }
+        }
+
+        if (res) Console.WriteLine("Signal is OK");
+        else Console.WriteLine("Signal is NOT OK");
       }
     }
 
@@ -77,6 +107,15 @@ public class PortChat
 
   private static void _serialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
   {
+    //try
+    //{
+    //  while (_serialPort.BytesToRead > 0)
+    //  {
+    //    char c = (char)_serialPort.ReadByte();
+    //    Console.Write(c.ToString());
+    //  }
+    //}
+    //catch (TimeoutException) { }
     try
     {
       while (_serialPort.BytesToRead > 0)
@@ -123,7 +162,7 @@ public class PortChat
         if (ValueNum >= SignalLength)
         {
           StateTx = StatesTx.END;
-          _serialPort.Close();
+          //_serialPort.Close();
 
           Console.WriteLine($"Values: {RecievedValues.Length}");
 
@@ -141,6 +180,6 @@ public class PortChat
   
   private static void MyLog(string s)
   {
-    //Console.WriteLine(s);
+    Console.WriteLine(s);
   }
 }

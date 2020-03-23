@@ -1,6 +1,7 @@
 ﻿using MDP_PPG.EntitiesEditing;
 using MDP_PPG.SignalAnalisys;
 using MDP_PPG.ViewModels;
+using PPG_Database;
 using PPG_Database.KeepingModels;
 using System;
 using System.Collections.Generic;
@@ -26,7 +27,7 @@ namespace MDP_PPG.PagedViews
 
 			PagedView = new PagedView<Recording>(
 				RefreshButtonsIsEnabled,
-				"Периоды обследований",
+				"Записи сигналов",
 				model => new RecordingTVM(model),
 				delegate (ModelBase pat)
 				{
@@ -63,7 +64,24 @@ namespace MDP_PPG.PagedViews
 
 			if (!res.GetValueOrDefault()) return;
 
-			PagedView.EditItemAsync(dlg.GetRecording());
+			var rec_m = dlg.GetRecording();
+			using (var context = new PPG_Context())
+			{
+				var rec = context.Recordings.Find(rec_m.Id);
+				rec.RecordingDateTime = rec_m.RecordingDateTime;
+
+				var sigd = context.SignalDatas.FirstOrDefault(sd => sd.RecordingId == rec_m.Id);
+				if (sigd == null)
+				{
+					sigd = new SignalData();
+					sigd.RecordingId = rec.Id;
+					context.SignalDatas.Add(sigd);
+				}
+
+				sigd.Data = rec_m.SignalData?.Data ?? null;
+
+				context.SaveChanges();
+			}
 		}
 
 		private void Btn_DelRec_Click(object sender, RoutedEventArgs e)

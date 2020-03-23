@@ -72,6 +72,9 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Converters\Parent2ChildrenMessageConverter.cs" />
+    <Compile Include="EntitiesEditing\SignalFileReader.cs" />
+    <Compile Include="EntitiesEditing\SignalPortReader.cs" />
+    <Compile Include="EntitiesEditing\SignalReader.cs" />
     <Compile Include="EntitiesEditing\UC_EditPatient.xaml.cs">
       <DependentUpon>UC_EditPatient.xaml</DependentUpon>
     </Compile>
@@ -83,9 +86,6 @@
     </Compile>
     <Compile Include="EntitiesEditing\W_EditRecordings.xaml.cs">
       <DependentUpon>W_EditRecordings.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="EntitiesEditing\W_LoadRecording.xaml.cs">
-      <DependentUpon>W_LoadRecording.xaml</DependentUpon>
     </Compile>
     <Compile Include="Helpers\MainFunctions.cs" />
     <Compile Include="MySettings.cs" />
@@ -131,10 +131,6 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="EntitiesEditing\W_EditRecordings.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="EntitiesEditing\W_LoadRecording.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

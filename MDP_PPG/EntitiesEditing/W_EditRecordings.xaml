@@ -13,21 +13,111 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="auto"/>
             <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
         </Grid.RowDefinitions>
 
-        <StackPanel Orientation="Horizontal">
-            
-            <local:UC_ValidativeTextBox x:Name="vtbRecordingDateTime" 
-                                        FieldName="Дата и время записи"
-                                        ErrMsgText="{x:Static km:Recording.DATE_TIME_FORMAT}"/>
-            
-            <Button Content="Загрузить запись"
-                    Click="Btn_LoadRecording_Click"/>
-            
-        </StackPanel>
-        
-        <WrapPanel Grid.Row="1" 
-                   FlowDirection="RightToLeft" >
+        <local:UC_ValidativeTextBox x:Name="vtbRecordingDateTime" 
+                                    FieldName="Дата и время записи"
+                                    ErrMsgText="{x:Static km:Recording.DATE_TIME_FORMAT}"
+                                    Margin="3"/>
+
+        <GroupBox Margin="3"
+                  Grid.Row="1">
+
+            <GroupBox.Header>
+                <TextBlock Text="Загрузить из:"
+                           VerticalAlignment="Center"
+                           Margin="3"/>
+            </GroupBox.Header>
+
+            <TabControl>
+
+                <TabItem Header="Файл">
+
+                    <StackPanel>
+
+                        <Button Content="Загрузить"
+                                Click="Btn_LoadRecording_FromFile_Click"
+                                Width="80"
+                                IsEnabled="{Binding IsGUIEnabled}"/>
+
+                        <TextBlock Text="{Binding FileMessage}"
+                                   HorizontalAlignment="Stretch"
+                                   TextWrapping="Wrap"
+                                   Margin="3"/>
+
+                    </StackPanel>
+
+                </TabItem>
+
+                <TabItem Header="Микроконтроллер">
+
+                    <StackPanel>
+
+                        <Button Content="Загрузить"
+                                Click="Btn_LoadRecording_FromMC_Click"
+                                Width="80"
+                                IsEnabled="{Binding IsGUIEnabled}"/>
+
+                        <TextBlock Text="{Binding PortMessage}"
+                                   HorizontalAlignment="Stretch"
+                                   TextWrapping="Wrap"
+                                   Margin="3"/>
+
+                        <StackPanel Orientation="Horizontal">
+
+                            <ListBox ItemsSource="{Binding MC_SignalReader.AvailablePorts}"
+                                 SelectedItem="{Binding MC_SignalReader.SelectedPort, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                            <Button Content="Обновить"
+                                Width="80"
+                                Click="Btn_refreshPortsList_Click"/>
+
+                        </StackPanel>
+
+                        <ProgressBar Minimum="0" Maximum="{Binding MC_SignalReader.TotalValues}" Value="{Binding MC_SignalReader.ValuesLoaded, Mode=OneWay}"
+                                     Height="25"
+                                     Margin="3"
+                                     Visibility="{Binding MC_SignalReader.PrBarVis}"/>
+
+                        <StackPanel Orientation="Horizontal"
+                                    Grid.Row="3"
+                                    Margin="3"
+                                    Visibility="{Binding MC_SignalReader.PrBarVis}">
+
+                            <TextBlock Text="{Binding MC_SignalReader.ValuesLoaded, Mode=OneWay}"
+                                    HorizontalAlignment="Stretch"
+                                    VerticalAlignment="Center"
+                                    TextWrapping="Wrap"
+                                    Margin="3"/>
+
+                            <TextBlock Text="из"
+                                        HorizontalAlignment="Stretch"
+                                        VerticalAlignment="Center"
+                                        TextWrapping="Wrap"
+                                        Margin="3"/>
+
+                            <TextBlock Text="{Binding MC_SignalReader.TotalValues}"
+                                        HorizontalAlignment="Stretch"
+                                        VerticalAlignment="Center"
+                                        TextWrapping="Wrap"
+                                        Margin="3"/>
+
+                        </StackPanel>
+
+                    </StackPanel>
+
+                </TabItem>
+
+            </TabControl>
+
+        </GroupBox>
+
+        <WrapPanel Grid.Row="4" 
+                   FlowDirection="RightToLeft"
+                   Margin="3">
 
             <Button x:Name="btnOk"
                     Content="OK" 
@@ -39,11 +129,8 @@
                     IsCancel="True" 
                     Click="ButtonCancel_OnClick"/>
 
-            <TextBlock Text="{Binding DataLoadingMessage}"
-                       HorizontalAlignment="Stretch"
-                       TextWrapping="Wrap"/>
         </WrapPanel>
-        
+
     </Grid>
-    
+
 </Window>
