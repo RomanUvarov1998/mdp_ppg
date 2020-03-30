@@ -5,13 +5,14 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MDP_PPG.EntitiesEditing"
         mc:Ignorable="d"
-        Title="Настройка микроконтроллера" Height="450" Width="800" ResizeMode="NoResize" SizeToContent="WidthAndHeight"
+        Title="Настройка микроконтроллера" MinHeight="450" MinWidth="800" ResizeMode="NoResize" SizeToContent="Width"
         Closing="Window_Closing">
 
     <Grid IsEnabled="{Binding IsGUIEnabled}">
 
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="auto"/>
             <RowDefinition Height="auto"/>
             <RowDefinition Height="auto"/>
         </Grid.RowDefinitions>
@@ -57,9 +58,22 @@
                    Text="{Binding StateMessage}"
                    TextWrapping="Wrap"/>
 
-        <WrapPanel Grid.Row="2" FlowDirection="RightToLeft">
-            <Button Content="Отмена" IsDefault="True" Click="Btn_Cansel_Click"/>
-            <Button Content="Настроить МК" IsCancel="True" Click="Btn_Save_Click"/>
+        <GroupBox Grid.Row="2" Header="Выбор порта:">
+            <StackPanel Orientation="Horizontal">
+
+                <ListBox ItemsSource="{Binding SignalPortReader.AvailablePorts}"
+                     SelectedItem="{Binding SignalPortReader.SelectedPort, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                <Button Content="Обновить"
+                    Width="80"
+                    Click="Btn_refreshPortsList_Click"/>
+
+            </StackPanel>
+        </GroupBox>
+
+        <WrapPanel Grid.Row="3" FlowDirection="RightToLeft">
+            <Button Content="Отмена" IsCancel="True" Click="Btn_Cansel_Click"/>
+            <Button Content="Настроить МК" IsDefault="True" Click="Btn_Save_Click"/>
         </WrapPanel>
         
     </Grid>

@@ -297,7 +297,7 @@ namespace MDP_PPG.EntitiesEditing
           BlockInterface(false);
           break;
         case MC_Tokens.SAVE_SETTINGS:
-          if (ChannelsMask == ReadBuffer[2])
+          if (ChannelsMask == ReadBuffer[1])
           {
             NotifyResult("Настройки успешно сохранены", true);
             BlockInterface(false);

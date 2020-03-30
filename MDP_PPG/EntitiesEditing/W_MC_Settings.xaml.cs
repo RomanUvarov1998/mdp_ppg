@@ -15,6 +15,7 @@ using PPG_Database.KeepingModels;
 using PPG_Database;
 using System.ComponentModel;
 using System.Data.Entity;
+using MDP_PPG.EntitiesEditing;
 
 namespace MDP_PPG.EntitiesEditing
 {
@@ -26,6 +27,8 @@ namespace MDP_PPG.EntitiesEditing
 		public W_MC_Settings()
 		{
 			InitializeComponent();
+
+			SignalPortReader = new SignalPortReader((s, b) => { StateMessage = s; _savedToMC = b; }, null, arg => IsLoadingData = arg);
 
 			DataContext = this;
 
@@ -64,6 +67,7 @@ namespace MDP_PPG.EntitiesEditing
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(StateMessage)));
 			}
 		}
+		public SignalPortReader SignalPortReader { get; set; }
 
 		//------------------------------- Event handlers -------------------------
 		private void Btn_Cansel_Click(object sender, RoutedEventArgs e)
@@ -76,7 +80,11 @@ namespace MDP_PPG.EntitiesEditing
 
 			if (!res) return;
 
-			DialogResult = true;
+			SaveToMC();
+		}
+		private void Btn_refreshPortsList_Click(object sender, RoutedEventArgs e)
+		{
+			SignalPortReader.RefreshPortsList();
 		}
 		private void Window_Closing(object sender, CancelEventArgs e)
 		{
@@ -119,27 +127,8 @@ namespace MDP_PPG.EntitiesEditing
 		}
 		private void SaveToMC()
 		{
-			//IsLoadingData = true;
-
-			//bool res;
-			//StateMessage = "Сохранение настроек на ПК...";
-			//try
-			//{
-			//	await _myContext.SaveChangesAsync();
-			//	StateMessage = "Настройки сохранены на ПК";
-			//	res = true;
-			//}
-			//catch (Exception ex)
-			//{
-			//	MessageBox.Show(ex.Message, ex.Source);
-			//	res = false;
-			//}
-			//finally
-			//{
-			//	IsLoadingData = false;
-			//}
-
-			//return res;
+			StateMessage = "Сохранение настроек на МК...";
+			SignalPortReader.TrySavelSettingsToMC(ChannelsList);
 		}
 
 		public event PropertyChangedEventHandler PropertyChanged;
@@ -148,5 +137,6 @@ namespace MDP_PPG.EntitiesEditing
 		private PPG_Context _myContext;
 		private bool _isLoadingData;
 		private string _stateMessage;
+		private bool _savedToMC = false;
 	}
 }
