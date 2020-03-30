@@ -34,24 +34,6 @@
 
             <TabControl>
 
-                <TabItem Header="Файл">
-
-                    <StackPanel>
-
-                        <Button Content="Загрузить"
-                                Click="Btn_LoadRecording_FromFile_Click"
-                                Width="80"
-                                IsEnabled="{Binding IsGUIEnabled}"/>
-
-                        <TextBlock Text="{Binding FileMessage}"
-                                   HorizontalAlignment="Stretch"
-                                   TextWrapping="Wrap"
-                                   Margin="3"/>
-
-                    </StackPanel>
-
-                </TabItem>
-
                 <TabItem Header="Микроконтроллер">
 
                     <StackPanel>
@@ -106,6 +88,24 @@
                                         Margin="3"/>
 
                         </StackPanel>
+
+                    </StackPanel>
+
+                </TabItem>
+
+                <TabItem Header="Файл">
+
+                    <StackPanel>
+
+                        <Button Content="Загрузить"
+                                Click="Btn_LoadRecording_FromFile_Click"
+                                Width="80"
+                                IsEnabled="{Binding IsGUIEnabled}"/>
+
+                        <TextBlock Text="{Binding FileMessage}"
+                                   HorizontalAlignment="Stretch"
+                                   TextWrapping="Wrap"
+                                   Margin="3"/>
 
                     </StackPanel>
 

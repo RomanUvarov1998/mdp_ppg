@@ -16,7 +16,7 @@ namespace MDP_PPG.EntitiesEditing
 			BlockInterface = blockInterface;
 		}
 
-		public abstract void TryRead();
+		public abstract void TryUploadSignal();
 
 		public abstract void TurnOff();
 

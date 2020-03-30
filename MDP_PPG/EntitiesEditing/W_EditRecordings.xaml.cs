@@ -81,7 +81,7 @@ namespace MDP_PPG.EntitiesEditing
 
 		private void Btn_LoadRecording_FromFile_Click(object sender, RoutedEventArgs e)
 		{
-			F_SignalReader.TryRead();
+			F_SignalReader.TryUploadSignal();
 		}
 		private void Btn_LoadRecording_FromMC_Click(object sender, RoutedEventArgs e)
 		{
@@ -97,7 +97,7 @@ namespace MDP_PPG.EntitiesEditing
 				return;
 			}
 
-			MC_SignalReader.TryRead();
+			MC_SignalReader.TryUploadSignal();
 		}
 
 

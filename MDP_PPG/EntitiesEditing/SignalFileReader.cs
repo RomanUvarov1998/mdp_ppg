@@ -20,7 +20,7 @@ namespace MDP_PPG.EntitiesEditing
 			OF_Dialog.Filter = "Текстовые файлы|*.txt|Бинарные файлы|*.dat;*.bin";
 		}
 
-		public override void TryRead()
+		public override void TryUploadSignal()
 		{
 
 			string path;
