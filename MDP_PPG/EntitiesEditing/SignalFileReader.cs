@@ -1,5 +1,6 @@
 ﻿using MDP_PPG.Helpers;
 using Microsoft.Win32;
+using PPG_Database.KeepingModels;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -13,16 +14,15 @@ namespace MDP_PPG.EntitiesEditing
 {
 	public class SignalFileReader : SignalReader, INotifyPropertyChanged
 	{
-		public SignalFileReader(Action<string, bool> notifyResult, Action<byte[]> setSignalData, Action<bool> blockInterface)
-			: base(notifyResult, setSignalData, blockInterface)
+		public SignalFileReader(Action<string, bool> notifyResult, Action onSignalUploadingCompleted, Action<bool> blockInterface)
+			: base(notifyResult, onSignalUploadingCompleted, blockInterface)
 		{
 			OF_Dialog = new OpenFileDialog();
 			OF_Dialog.Filter = "Текстовые файлы|*.txt|Бинарные файлы|*.dat;*.bin";
 		}
 
-		public override void TryUploadSignal()
+		public override void TryUploadSignal(Recording recording)
 		{
-
 			string path;
 
 			if (OF_Dialog.ShowDialog() == true)
@@ -58,7 +58,7 @@ namespace MDP_PPG.EntitiesEditing
 			}
 
 			NotifyResult($"Файл '{Path.GetFileName(path)}' успешно загружен", false);
-			SetSignalData(data);
+			this.Recording.SignalData.Data = data;
 		}
 
 		public override void TurnOff()

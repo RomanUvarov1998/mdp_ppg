@@ -32,9 +32,9 @@ namespace MDP_PPG.EntitiesEditing
 			vtbRecordingDateTime.SetValues(recordingDateTimeStr, ValidateRecordingDateTime, s => s, SetBtnOkEnabled);
 
 			F_SignalReader = new SignalFileReader(
-				(s, b) => { FileMessage = s; DataFileIsLoaded = b; }, SetSignalData, arg => IsLoadingData = arg);
+				(s, b) => { FileMessage = s; DataFileIsLoaded = b; }, CheckSignalData, arg => IsLoadingData = arg);
 			MC_SignalReader = new SignalPortReader(
-				(s, b) => { PortMessage = s; DataFileIsLoaded = b; }, SetSignalData, arg => IsLoadingData = arg);
+				(s, b) => { PortMessage = s; DataFileIsLoaded = b; }, CheckSignalData, arg => IsLoadingData = arg);
 
 			DataContext = this;
 
@@ -81,7 +81,7 @@ namespace MDP_PPG.EntitiesEditing
 
 		private void Btn_LoadRecording_FromFile_Click(object sender, RoutedEventArgs e)
 		{
-			F_SignalReader.TryUploadSignal();
+			F_SignalReader.TryUploadSignal(Instance);
 		}
 		private void Btn_LoadRecording_FromMC_Click(object sender, RoutedEventArgs e)
 		{
@@ -97,7 +97,7 @@ namespace MDP_PPG.EntitiesEditing
 				return;
 			}
 
-			MC_SignalReader.TryUploadSignal();
+			MC_SignalReader.TryUploadSignal(Instance);
 		}
 
 
@@ -173,16 +173,14 @@ namespace MDP_PPG.EntitiesEditing
 			FileMessage = msg;
 			DataFileIsLoaded = isSuccess;
 		}
-		private void SetSignalData(byte[] bytes)
+		private void CheckSignalData()
 		{
-			if (bytes.Length <= 0)
+			if (Instance.SignalData.Data.Length <= 0)
 			{
 				MessageBox.Show("Сигнал содержит нуль отсчетов, такой сигнал невозможно привязать к пациенту", "Сигнал пуст", MessageBoxButton.OK, MessageBoxImage.Error);
 				NotifyGettingSignalStatus("Данный сигнал пуст, попробуйте загрузить другой сигнал", false);
 				return;
 			}
-
-			Instance.SignalData = new SignalData(bytes, Instance.Id);
 		}
 
 

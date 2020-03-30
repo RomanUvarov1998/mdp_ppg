@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PPG_Database.KeepingModels;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -9,19 +10,29 @@ namespace MDP_PPG.EntitiesEditing
 {
 	public abstract class SignalReader 
 	{
-		public SignalReader(Action<string, bool> notifyResult, Action<byte[]> setSignalData, Action<bool> blockInterface)
+		public SignalReader(Action<string, bool> notifyResult, Action onSignalUploadingCompleted, Action<bool> blockInterface)
 		{
 			NotifyResult = notifyResult;
-			SetSignalData = setSignalData;
+			OnSignalUploadingCompleted = onSignalUploadingCompleted;
 			BlockInterface = blockInterface;
 		}
 
-		public abstract void TryUploadSignal();
-
+		public abstract void TryUploadSignal(Recording recording);
 		public abstract void TurnOff();
+
+		protected void PrepareRecordingLength(UInt32 length)
+		{
+			Recording.SignalData = new SignalData(new byte[length * 2], Recording.Id);
+			ValuesBuffer = new UInt16[length];
+		}
+
+		protected UInt16[] ValuesBuffer;
 
 		protected Action<string, bool> NotifyResult;
 		protected Action<bool> BlockInterface;
-		protected Action<byte[]> SetSignalData;
+		protected Action OnSignalUploadingCompleted;
+
+		protected int ChannelsMask;
+		protected Recording Recording;
 	}
 }

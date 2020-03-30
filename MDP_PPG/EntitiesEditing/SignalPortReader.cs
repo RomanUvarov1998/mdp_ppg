@@ -14,8 +14,8 @@ namespace MDP_PPG.EntitiesEditing
 {
   public class SignalPortReader : SignalReader, INotifyPropertyChanged
   {
-    public SignalPortReader(Action<string, bool> notifyResult, Action<byte[]> setSignalData, Action<bool> blockInterface)
-      : base(notifyResult, setSignalData, blockInterface)
+    public SignalPortReader(Action<string, bool> notifyResult, Action onSignalUploadingCompleted, Action<bool> blockInterface)
+      : base(notifyResult, onSignalUploadingCompleted, blockInterface)
     {
       // Create a new SerialPort object with default settings.
       _serialPort = new SerialPort();
@@ -41,41 +41,55 @@ namespace MDP_PPG.EntitiesEditing
 
 
     //---------------------------- GUI Props ----------------------------------------
-
-    public double ValuesLoaded => ValueNum;
-    public double TotalValues => SignalLength;
+    public UInt32 ValuesLoaded  
+    {
+      get => _valuesLoaded;
+      set
+      {
+        _valuesLoaded = value;
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ValuesLoaded)));
+      }
+    }
+    public UInt32 TotalValues 
+    {
+      get => _totalValues;
+      set
+      {
+        _totalValues = value;
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TotalValues)));
+      }
+    }
 
     public Visibility PrBarVis
     {
-      get => prBarVis;
+      get => _prBarVis;
       set
       {
-        prBarVis = value;
+        _prBarVis = value;
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PrBarVis)));
       }
     }
 
     public string[] AvailablePorts
     {
-      get => availablePorts;
+      get => _availablePorts;
       set
       {
-        availablePorts = value;
+        _availablePorts = value;
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(AvailablePorts)));
       }
     }
     public string SelectedPort
     {
-      get => selectedPort;
+      get => _selectedPort;
       set
       {
-        selectedPort = value;
+        _selectedPort = value;
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedPort)));
       }
     }
 
     //---------------------------- API --------------------------------------------
-
     public void RefreshPortsList()
     {
       AvailablePorts = SerialPort.GetPortNames();
@@ -92,39 +106,36 @@ namespace MDP_PPG.EntitiesEditing
       return AvailablePorts.Contains(selPort);
     }
 
-    public override void TryUploadSignal()
+    public override void TryUploadSignal(Recording recording)
     {
-      BlockInterface(true);
-
-      ValueNum = 0;
-      SignalLength = 0;
-
-      PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ValuesLoaded)));
-      PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TotalValues)));
-
-      NotifyResult("Подготовка к передаче...", false);
-
-      try
-      {
-        _serialPort.PortName = SelectedPort;
-        _serialPort.DataReceived += _serialPort_DataReceived;
-        if (!_serialPort.IsOpen) _serialPort.Open();
-
-        NotifyResult("Передача...", false);
-        BeginTransmitting();
-      }
-      catch (UnauthorizedAccessException ex)
+      if (!TryToConnect(out string errorMsg))
       {
         TurnOff();
         BlockInterface(false);
-        NotifyResult($"Не удалось открыть порт '{SelectedPort}' из-за ошибки доступа", false);
+        NotifyResult(errorMsg, false);
+        return;
       }
-      catch (IOException)
+
+      this.Recording = recording;
+
+      BeginInteracting(Modes.SIGNAL_UPLOADING);
+    }
+
+    public void TrySavelSettingsToMC(List<SignalChannel> signalChannels)
+    {
+      if (!TryToConnect(out string errorMsg))
       {
         TurnOff();
         BlockInterface(false);
-        NotifyResult($"Не удалось открыть порт '{SelectedPort}', потомучто его не существует", false);
+        NotifyResult(errorMsg, false);
+        return;
       }
+
+      ChannelsMask = 0;
+      foreach (var ch in signalChannels)
+        if (ch.IsInUse) ChannelsMask |= (byte)(1 << ch.ChannelCode);
+
+      BeginInteracting(Modes.SETTINGS);
     }
 
     public override void TurnOff()
@@ -134,30 +145,37 @@ namespace MDP_PPG.EntitiesEditing
       _serialPort.DataReceived -= _serialPort_DataReceived;
     }
 
-    public bool LoadSettingsToMC(List<SignalChannel> signalChannels)
+    //---------------------------- Other --------------------------------------------
+    private bool TryToConnect(out string errorMsg)
     {
-      byte channelsSettings = 0;
-      foreach (var ch in signalChannels)
-        if (ch.IsInUse) channelsSettings |= (byte)(1 << ch.ChannelCode);
+      BlockInterface(true);
+
+      ValuesLoaded = 0;
+      TotalValues = 0;
+      PrBarVis = Visibility.Hidden;
 
       try
       {
-        if (_serialPort.IsOpen) _serialPort.Open();
-        _serialPort.Write(new byte[] { (byte)MC_Tokens.SAVE_SETTINGS, channelsSettings }, 0, 2);
+        _serialPort.PortName = SelectedPort;
+        _serialPort.DataReceived += _serialPort_DataReceived;
+        if (!_serialPort.IsOpen) _serialPort.Open();
+
+        NotifyResult("Соединение...", false);
+
+        errorMsg = string.Empty;
+        return true;
       }
       catch (Exception ex)
       {
-        TurnOff();
+        errorMsg = ex.Message;
         return false;
       }
-
-      return true;
     }
 
-    //---------------------------- Other --------------------------------------------
-
-    private void BeginTransmitting()
+    private void BeginInteracting(Modes mode)
     {
+      _mode = mode;
+
       MyLog("Begin transmitting");
       MyLog("Got: ");
       SignalIsCorrupted = false;
@@ -181,10 +199,11 @@ namespace MDP_PPG.EntitiesEditing
       switch (_mode)
       {
         case Modes.SIGNAL_UPLOADING:
-          AskFor(MC_Tokens.GET_SIGNAL_LENGTH);
+          SendByteToMC(MC_Tokens.GET_SIGNAL_LENGTH);
           break;
         case Modes.SETTINGS:
-          AskFor(MC_Tokens.GET_SIGNAL_LENGTH);
+          SendByteToMC(MC_Tokens.SAVE_SETTINGS);
+          SendByteToMC((byte)ChannelsMask);
           break;
       }
     }
@@ -207,7 +226,7 @@ namespace MDP_PPG.EntitiesEditing
           bytePos = 0;
 
           ProcessGettingSignal();
-        }        
+        }
       }
       catch (TimeoutException)
       {
@@ -230,61 +249,73 @@ namespace MDP_PPG.EntitiesEditing
       switch (token)
       {
         case MC_Tokens.GET_SIGNAL_LENGTH:
-          SignalLength = BitConverter.ToUInt32(ReadBuffer, 1);
+          TotalValues = BitConverter.ToUInt32(ReadBuffer, 1);
 
-          MyLog($"Signal length is '{SignalLength}'");
+          MyLog($"Signal length is '{TotalValues}'");
           PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TotalValues)));
 
-          if (SignalLength == 0)
+          if (TotalValues == 0)
           {
             TurnOff();
             SignalIsCorrupted = true;
             NotifyResult("Длина сигнала равна 0", false);
           }
 
-          RecievedValues = new UInt16[SignalLength];
+          PrepareRecordingLength(TotalValues);
           MyLog("");
 
           PrBarVis = Visibility.Visible;
 
-          AskFor(MC_Tokens.GET_DATA);
+          SendByteToMC(MC_Tokens.GET_DATA);
           break;
         case MC_Tokens.GET_DATA:
-          if (ValueNum > SignalLength)
+          if (ValuesLoaded > TotalValues)
           {
             TurnOff();
             NotifyResult("Значений больше, чем заявлено", false);
             BlockInterface(false);
             return;
           }
-          
+
           UInt16 value = BitConverter.ToUInt16(ReadBuffer, 1);
 
-          MyLog($"Got '{value}': {ValueNum}/{SignalLength}");
+          MyLog($"Got '{value}': {ValuesLoaded}/{TotalValues}");
           PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ValuesLoaded)));
 
-          checked { ++ValueNum; }
-          RecievedValues[ValueNum - 1] = value;
+          checked { ++ValuesLoaded; }
+          ValuesBuffer[ValuesLoaded - 1] = value;
           break;
         case MC_Tokens.DATA_END:
           if (!SignalIsCorrupted)
           {
             NotifyResult("Сигнал успешно передан", true);
-            SetSignalData(MainFunctions.FromMcToDatabase(RecievedValues));
+            this.Recording.SignalData.Data = MainFunctions.FromMcToDatabase(ValuesBuffer);
           }
           else
             NotifyResult("Сигнал был поврежден во время передачи", true);
 
           BlockInterface(false);
           break;
+        case MC_Tokens.SAVE_SETTINGS:
+          if (ChannelsMask == ReadBuffer[2])
+          {
+            NotifyResult("Настройки успешно сохранены", true);
+            BlockInterface(false);
+          }
+          else
+          {
+            NotifyResult("Не удалось успешно сохранить настройки", false);
+            BlockInterface(false);
+          }
+          break;
       }
     }
 
-    private void AskFor(MC_Tokens token)
+    private void SendByteToMC(byte data)
     {
       try
       {
-        _serialPort.Write(new byte[] { (byte)token }, 0, 1);
+        _serialPort.Write(new byte[] { data }, 0, 1);
       }
       catch (Exception ex)
       {
@@ -292,6 +323,10 @@ namespace MDP_PPG.EntitiesEditing
         NotifyResult(ex.Message, false);
         BlockInterface(false);
       }
+    }
+    private void SendByteToMC(MC_Tokens token)
+    {
+      SendByteToMC((byte)token);
     }
 
     private void MyLog(string s)
@@ -302,12 +337,8 @@ namespace MDP_PPG.EntitiesEditing
     private SerialPort _serialPort;
     private Timer MyTimer;
 
-    private UInt16[] RecievedValues;
-    private UInt32 ValueNum = 0;
-
     private int bytePos = 0;
     private byte[] ReadBuffer = new byte[5];
-    private UInt32 SignalLength;
 
     private bool SignalIsCorrupted = false;
 
@@ -324,9 +355,11 @@ namespace MDP_PPG.EntitiesEditing
       DATA_END = 3,
       SAVE_SETTINGS = 5,
     }
-    private string[] availablePorts;
-    private string selectedPort;
-    private Visibility prBarVis = Visibility.Hidden;
+    private string[] _availablePorts;
+    private string _selectedPort;
+    private Visibility _prBarVis = Visibility.Hidden;
+    private UInt32 _valuesLoaded;
+    private UInt32 _totalValues;
 
     public event PropertyChangedEventHandler PropertyChanged;
   }
