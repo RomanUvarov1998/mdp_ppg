@@ -46,6 +46,7 @@
     <Compile Include="KeepingModels\ModelBase.cs" />
     <Compile Include="KeepingModels\Patient.cs" />
     <Compile Include="KeepingModels\Recording.cs" />
+    <Compile Include="KeepingModels\SignalChannel.cs" />
     <Compile Include="KeepingModels\SignalData.cs" />
     <Compile Include="PPG_Context.cs" />
   </ItemGroup>

@@ -87,6 +87,9 @@
     <Compile Include="EntitiesEditing\W_EditRecordings.xaml.cs">
       <DependentUpon>W_EditRecordings.xaml</DependentUpon>
     </Compile>
+    <Compile Include="EntitiesEditing\W_MC_Settings.xaml.cs">
+      <DependentUpon>W_MC_Settings.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Helpers\MainFunctions.cs" />
     <Compile Include="MySettings.cs" />
     <Compile Include="PagedViews\IManagablePagedView.cs" />
@@ -131,6 +134,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="EntitiesEditing\W_EditRecordings.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="EntitiesEditing\W_MC_Settings.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

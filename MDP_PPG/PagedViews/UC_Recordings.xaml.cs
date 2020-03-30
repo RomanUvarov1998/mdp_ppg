@@ -130,5 +130,11 @@ namespace MDP_PPG.PagedViews
 			var dlg = new W_SignalAnalyser(PagedView.SelectedItem.Instance.SignalData);
 			dlg.ShowDialog();
 		}
+
+		private void Btn_MC_Settings_Click(object sender, RoutedEventArgs e)
+		{
+			var dlg = new W_MC_Settings();
+			dlg.ShowDialog();
+		}
 	}
 }

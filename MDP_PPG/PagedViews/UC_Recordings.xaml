@@ -87,6 +87,9 @@
                     Click="Btn_Analisys_Click"
                     IsEnabled="{Binding BtnAnalyseIsEnabled}"/>
 
+            <Button Content="Настроить МК"
+                    Click="Btn_MC_Settings_Click"/>
+
         </WrapPanel>
 
         <ListView Grid.Row="1" 
