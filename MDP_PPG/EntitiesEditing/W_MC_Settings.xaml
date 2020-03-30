@@ -5,12 +5,14 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MDP_PPG.EntitiesEditing"
         mc:Ignorable="d"
-        Title="Настройка микроконтроллера" Height="450" Width="800" ResizeMode="NoResize" SizeToContent="WidthAndHeight">
-    
-    <Grid>
+        Title="Настройка микроконтроллера" Height="450" Width="800" ResizeMode="NoResize" SizeToContent="WidthAndHeight"
+        Closing="Window_Closing">
+
+    <Grid IsEnabled="{Binding IsGUIEnabled}">
 
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="auto"/>
             <RowDefinition Height="auto"/>
         </Grid.RowDefinitions>
 
@@ -31,11 +33,31 @@
                         <GridViewColumn Header="Название" DisplayMemberBinding="{Binding Name}"/>
                     </GridView>
                 </ListView.View>
+
+                <ListView.Style>
+                    <Style TargetType="ListView">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsLoadingData}" Value="True">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate>
+                                            <TextBlock Text="Загрузка..."/>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ListView.Style>
             </ListView>
             
         </GroupBox>
 
-        <WrapPanel Grid.Row="1" FlowDirection="RightToLeft">
+        <TextBlock Grid.Row="1"
+                   Text="{Binding StateMessage}"
+                   TextWrapping="Wrap"/>
+
+        <WrapPanel Grid.Row="2" FlowDirection="RightToLeft">
             <Button Content="Отмена" IsDefault="True" Click="Btn_Cansel_Click"/>
             <Button Content="Настроить МК" IsCancel="True" Click="Btn_Save_Click"/>
         </WrapPanel>

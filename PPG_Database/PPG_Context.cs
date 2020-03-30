@@ -47,12 +47,20 @@ namespace PPG_Database
 		private static readonly object m_oCreateDatabaseLock = new object();
 		private void Seed()
 		{
+			if (!SignalChannels.Any())
+			{
+				SignalChannels.Add(new SignalChannel("ЭКГ", 0) { IsInUse = true });
+				SignalChannels.Add(new SignalChannel("ФПГ ИК", 1) { IsInUse = true });
+				SignalChannels.Add(new SignalChannel("ФПГ К", 2) { IsInUse = true });
 
+				SaveChanges();
+			}
 		}
 
 		public DbSet<Patient> Patients { get; set; }
 		public DbSet<Recording> Recordings { get; set; }
 		public DbSet<SignalData> SignalDatas { get; set; }
+		public DbSet<SignalChannel> SignalChannels { get; set; }
 
 		protected override void OnModelCreating(DbModelBuilder modelBuilder)
 		{

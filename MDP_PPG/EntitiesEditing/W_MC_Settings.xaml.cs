@@ -14,6 +14,7 @@ using System.Windows.Shapes;
 using PPG_Database.KeepingModels;
 using PPG_Database;
 using System.ComponentModel;
+using System.Data.Entity;
 
 namespace MDP_PPG.EntitiesEditing
 {
@@ -28,37 +29,124 @@ namespace MDP_PPG.EntitiesEditing
 
 			DataContext = this;
 
-			ChannelsList = new List<SignalChannel>()
-			{
-				new SignalChannel("ЭКГ", 0) { IsInUse = true },
-				new SignalChannel("ФПГ ИК", 1) { IsInUse = true },
-				new SignalChannel("ФПГ К", 2) { IsInUse = true },
-			};
+			_myContext = new PPG_Context();
+
+			LoadChannels();
 		}
 
-		public List<SignalChannel> ChannelsList
+		//------------------------------- GUI ------------------------------------
+		public bool IsLoadingData
 		{
-			get => channelsList;
+			get => _isLoadingData;
 			set
 			{
-				channelsList = value;
+				_isLoadingData = value;
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsLoadingData)));
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsGUIEnabled)));
+			}
+		}
+		public bool IsGUIEnabled => !IsLoadingData;
+		public List<SignalChannel> ChannelsList
+		{
+			get => _channelsList;
+			set
+			{
+				_channelsList = value;
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ChannelsList)));
 			}
 		}
+		public string StateMessage
+		{
+			get => _stateMessage;
+			set
+			{
+				_stateMessage = value;
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(StateMessage)));
+			}
+		}
 
-		public event PropertyChangedEventHandler PropertyChanged;
-
-		private List<SignalChannel> channelsList;
-
+		//------------------------------- Event handlers -------------------------
 		private void Btn_Cansel_Click(object sender, RoutedEventArgs e)
 		{
 			DialogResult = false;
 		}
-
-		private void Btn_Save_Click(object sender, RoutedEventArgs e)
+		private async void Btn_Save_Click(object sender, RoutedEventArgs e)
 		{
-			//using ()
+			bool res = await SaveToDB();
+
+			if (!res) return;
+
 			DialogResult = true;
 		}
+		private void Window_Closing(object sender, CancelEventArgs e)
+		{
+			_myContext.Dispose();
+		}
+
+		//------------------------------- Other -------------------------
+
+		private async void LoadChannels()
+		{
+			IsLoadingData = true;
+
+			ChannelsList = await _myContext.SignalChannels.ToListAsync();
+
+			IsLoadingData = false;
+		}
+		private async Task<bool> SaveToDB()
+		{
+			IsLoadingData = true;
+
+			bool res;
+			StateMessage = "Сохранение настроек на ПК...";
+			try
+			{
+				await _myContext.SaveChangesAsync();
+				StateMessage = "Настройки сохранены на ПК";
+				res = true;
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show(ex.Message, ex.Source);
+				res = false;
+			}
+			finally
+			{
+				IsLoadingData = false;
+			}
+
+			return res;
+		}
+		private void SaveToMC()
+		{
+			//IsLoadingData = true;
+
+			//bool res;
+			//StateMessage = "Сохранение настроек на ПК...";
+			//try
+			//{
+			//	await _myContext.SaveChangesAsync();
+			//	StateMessage = "Настройки сохранены на ПК";
+			//	res = true;
+			//}
+			//catch (Exception ex)
+			//{
+			//	MessageBox.Show(ex.Message, ex.Source);
+			//	res = false;
+			//}
+			//finally
+			//{
+			//	IsLoadingData = false;
+			//}
+
+			//return res;
+		}
+
+		public event PropertyChangedEventHandler PropertyChanged;
+
+		private List<SignalChannel> _channelsList;
+		private PPG_Context _myContext;
+		private bool _isLoadingData;
+		private string _stateMessage;
 	}
 }
