@@ -185,29 +185,31 @@ namespace MDP_PPG.PagedViews
 				return;
 			}
 
-			SignalData sd;
+			Recording rec;
 
 			using (var context = new PPG_Context())
 			{
-				sd = await context.SignalDatas.FirstOrDefaultAsync(d => d.RecordingId == recording.Id);
+				rec = await context.Recordings
+					.Include(r => r.SignalDatas.Select(sd => sd.SignalChannel))
+					.FirstOrDefaultAsync(r => r.Id == recording.Id);
 			}
 
-			if (sd != null)
+			if (rec != null)
 			{
 				Dispatcher.Invoke(delegate
 				{
-					GiveData(sd);
+					GiveData(rec);
 				});
 			}
 
 			IsLoadingData = false;
 		}
-		public void GiveData(SignalData sd)
+		public void GiveData(Recording rec)
 		{
-			if (sd != null)
+			if (rec != null)
 			{
 				Plot = new SignalDataGV(PixelsPerDip);
-				Plot.SetData(sd, CurrentScale);
+				Plot.SetData(rec, CurrentScale);
 				plotGrid.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
 				OnWindowResized();
 			}

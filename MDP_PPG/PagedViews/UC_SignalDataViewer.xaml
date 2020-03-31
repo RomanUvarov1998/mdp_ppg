@@ -132,12 +132,24 @@
                       MinWidth="100"
                       MinHeight="100">
 
-                    <Polyline Points="{Binding Plot.PlotPoints}"
-                                Stroke="Green"
-                                StrokeThickness="3"
-                                SnapsToDevicePixels="True"
-                                HorizontalAlignment="Left"
-                                StrokeLineJoin="Round" />
+                    <ItemsControl ItemsSource="{Binding Plot.Plots}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Polyline Points="{Binding Points}"
+                                            Stroke="{Binding PlotBrush}"
+                                            StrokeThickness="3"
+                                            SnapsToDevicePixels="True"
+                                            HorizontalAlignment="Left"
+                                            StrokeLineJoin="Round" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <Grid/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
 
                     <Path Data="{Binding Plot.PlotGrid}" 
                             Stroke="Gray" 

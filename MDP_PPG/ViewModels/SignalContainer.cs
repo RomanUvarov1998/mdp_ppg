@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PPG_Database.KeepingModels;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -11,29 +12,44 @@ namespace MDP_PPG.ViewModels
 {
 	public class SignalContainer
 	{
-		public void SetData(double[] values, double fs, double pixelsPerDip)
+		public void SetData(Recording recording, double fs, double pixelsPerDip)
 		{
 			if (fs <= 0.0) throw new ArgumentException("fs > 0");
-			if (values == null) throw new ArgumentNullException("values must be not null");
+			if (recording == null) throw new ArgumentNullException("recording must be not null");
 
-			Values = values;
-			Fs = fs;
-			Ts = 1.0 / Fs;
-			OriginalPoints = values
-				.Select((v, index) => new Point(index * Ts, v))
-				.ToArray();
+			Recording = recording;
+
+			SignalData[] sds = Recording.SignalDatas.ToArray();
+			for (int i = 0; i < Recording.SignalDatas.Count; ++i)
+			{
+				var sdcvm = new SignalDataChannelPlotVM(sds[i], Recording.Fs, LineBrushes[i]);
+				SignalDataChannelPlotVMs.Add(sdcvm);
+			}
+
+			Ts = 1.0 / recording.Fs;
 
 			Min_X = 0.0;
-			Max_X = Values.Length * Ts;
+			Max_X = SignalDataChannelPlotVMs.Select(vm => vm.Values.Length).Max() * Ts;
 
-			Min_Y = Values.Min();
-			Max_Y = Values.Max();
+			Min_Y = SignalDataChannelPlotVMs.Select(vm => vm.Values.Min()).Min();
+			Max_Y = SignalDataChannelPlotVMs.Select(vm => vm.Values.Max()).Max();
 
 			X_Range = Max_X - Min_X;
 			Y_Range = Max_Y - Min_Y;
 
 			PixelsPerDip = pixelsPerDip;
 		}
+
+		public static Brush[] LineBrushes = new Brush[]
+		{
+			Brushes.Green,
+			Brushes.OrangeRed,
+			Brushes.Blue,
+			Brushes.Violet,
+			Brushes.YellowGreen,
+			Brushes.SkyBlue,
+		};
+
 		private double PixelsPerDip;
 		
 		public Size AllPlotSize
@@ -60,9 +76,9 @@ namespace MDP_PPG.ViewModels
 			}
 		}
 
-		public double[] Values;
-		public Point[] OriginalPoints;
-		public double Fs;
+		public List<SignalDataChannelPlotVM> SignalDataChannelPlotVMs = new List<SignalDataChannelPlotVM>();
+		private Recording Recording;
+
 		public double Ts;
 
 		public double Min_X;
@@ -77,47 +93,49 @@ namespace MDP_PPG.ViewModels
 		public void HighLightPointNearestTo(Point point, Rect rectWindow,
 			GeometryGroup ggCircle, GeometryGroup ggText)
 		{
-			if (DrawnPoints.Length == 0) return;
+			foreach (var vm in SignalDataChannelPlotVMs)
+			{
+				if (vm.DrawnPoints.Length == 0) continue;
 
-			PlotDataPoint pdp = DrawnPoints[0];
-			double minDistY = Dist2(pdp.DisplayPoint, point);
+				PlotDataPoint pdp = vm.DrawnPoints[0];
+				double minDistY = Dist2(pdp.DisplayPoint, point);
 
-			if (DrawnPoints.Length > 1)
-				for (int i = 1; i < DrawnPoints.Length; ++i)
-				{
-					double curDist = Dist2(DrawnPoints[i].DisplayPoint, point);
-					if (curDist < minDistY)
+				if (vm.DrawnPoints.Length > 1)
+					for (int i = 1; i < vm.DrawnPoints.Length; ++i)
 					{
-						minDistY = curDist;
-						pdp = DrawnPoints[i];
+						double curDist = Dist2(vm.DrawnPoints[i].DisplayPoint, point);
+						if (curDist < minDistY)
+						{
+							minDistY = curDist;
+							pdp = vm.DrawnPoints[i];
+						}
 					}
-				}
 
-			string message = $"{pdp.ValueTime.X.ToString("G3")}; {pdp.ValueTime.Y.ToString("G4")}";
-			var tf = GetTextField(message);
+				string message = $"{pdp.ValueTime.X.ToString("G3")}; {pdp.ValueTime.Y.ToString("G4")}";
+				var tf = GetTextField(message);
 
-			var loc = new Point(pdp.DisplayPoint.X - tf.Width - 3, pdp.DisplayPoint.Y);
+				var loc = new Point(pdp.DisplayPoint.X - tf.Width - 3, pdp.DisplayPoint.Y);
 
-			loc.X = Math.Max(0.0, point.X + 20);
-			loc.X = Math.Min(loc.X, rectWindow.Width - tf.Width);
-			loc.Y = Math.Max(0.0, loc.Y);
-			loc.Y = Math.Min(loc.Y, rectWindow.Height - tf.Height - 3);
+				loc.X = Math.Max(0.0, point.X + 20);
+				loc.X = Math.Min(loc.X, rectWindow.Width - tf.Width);
+				loc.Y = Math.Max(0.0, loc.Y);
+				loc.Y = Math.Min(loc.Y, rectWindow.Height - tf.Height - 3);
 
-			var geom = tf.BuildGeometry(loc);
-			ggText.Children.Add(geom);
+				var geom = tf.BuildGeometry(loc);
+				ggText.Children.Add(geom);
 
-			var p1 = pdp.DisplayPoint;
-			var p2 = pdp.DisplayPoint;
+				var p1 = pdp.DisplayPoint;
+				var p2 = pdp.DisplayPoint;
 
-			p1.Offset(-2, -2);
-			p2.Offset(2, 2);
+				p1.Offset(-2, -2);
+				p2.Offset(2, 2);
 
-			var rectGeom = new EllipseGeometry(new Rect(p1, p2));
-			ggCircle.Children.Add(rectGeom);
+				var rectGeom = new EllipseGeometry(new Rect(p1, p2));
+				ggCircle.Children.Add(rectGeom);
+			}
 		}
 
 		public void SetContainers(
-			PointCollection plotPoints, 
 			GeometryGroup plotGrid, 
 			GeometryGroup x_Axis, 
 			GeometryGroup y_Axis,
@@ -125,18 +143,25 @@ namespace MDP_PPG.ViewModels
 		{
 			//------------------- draw plot --------------------------
 			#region plot
-			DrawnPoints = OriginalPoints
-				.Where(p =>
-					p.X * scale.Width >= rectWindow.Left &&
-					p.X * scale.Width <= rectWindow.Right)
-				.Select(p => new PlotDataPoint(
-					new Point(WtoD_X(p.X, rectWindow, scale), WtoD_Y(p.Y, rectWindow, scale)),
-					p)
-				)
-				.ToArray();
+			foreach (var vm in SignalDataChannelPlotVMs)
+			{
+				vm.DrawnPoints = vm.OriginalPoints
+					.Where(p =>
+						p.X * scale.Width >= rectWindow.Left &&
+						p.X * scale.Width <= rectWindow.Right)
+					.Select(p => new PlotDataPoint(
+						new Point(WtoD_X(p.X, rectWindow, scale), WtoD_Y(p.Y, rectWindow, scale)),
+						p)
+					)
+					.ToArray();
 
-			foreach (var pdp in DrawnPoints)
-				plotPoints.Add(pdp.DisplayPoint);
+				var pc = new PointCollection(vm.DrawnPoints.Length);
+				foreach (var pdp in vm.DrawnPoints)
+					pc.Add(pdp.DisplayPoint);
+
+				vm.Points = pc;
+			}
+			
 			#endregion
 
 			//-------------------- draw X axis -------------------------
@@ -150,9 +175,9 @@ namespace MDP_PPG.ViewModels
 			double valueRight = rectWindow.Right / scale.Width;
 
 			List<double> xAxisBarsXs = new List<double>();
-			if (DrawnPoints.Length > 0)
+			if (SignalDataChannelPlotVMs.Any(vm => vm.DrawnPoints.Length > 0))
 			{
-				if (valueLeft > DrawnPoints.Last().ValueTime.X)
+				if (valueLeft > SignalDataChannelPlotVMs.Max(vm => vm.DrawnPoints.Last().ValueTime.X))
 					throw new Exception("no plot");
 
 				double minTimeStep = MIN_BAR_DIST_X / scale.Width;
@@ -163,13 +188,16 @@ namespace MDP_PPG.ViewModels
 
 				int samplesPerDist = (int)Math.Ceiling(minTimeStep / Ts);
 
-				for (int i = firstDistNum; i < DrawnPoints.Length; i += samplesPerDist)
+				for (int i = firstDistNum; i < SignalDataChannelPlotVMs.Max(vm => vm.DrawnPoints.Length); i += samplesPerDist)
 				{
-					double x = DrawnPoints[i].DisplayPoint.X;
+					var vm = SignalDataChannelPlotVMs.FirstOrDefault(_vm => _vm.DrawnPoints.Length >= i);
+					if (vm == null) break;
+
+					double x = vm.DrawnPoints[i].DisplayPoint.X;
 					xAxisBarsXs.Add(x);
 
 					x_Axis.Children.Add(GetVerticalBarFor_X(x));
-					x_Axis.Children.Add(TextAt(DrawnPoints[i].ValueTime.X.ToString("G4"), x));
+					x_Axis.Children.Add(TextAt(vm.DrawnPoints[i].ValueTime.X.ToString("G4"), x));
 				}
 			}
 			#endregion
@@ -277,7 +305,6 @@ namespace MDP_PPG.ViewModels
 			(rectWindow.Height + rectWindow.Top - y) / scale.Height;
 		private double DtoW_X(double x, Rect rectWindow, Size scale) =>
 			(x + rectWindow.Left) / scale.Width;
-		private PlotDataPoint[] DrawnPoints = new PlotDataPoint[0];
 		private double Dist2(Point p1, Point p2) => 
 			Math.Pow(p1.X - p2.X, 2) + Math.Pow(p1.Y - p2.Y, 2);
 

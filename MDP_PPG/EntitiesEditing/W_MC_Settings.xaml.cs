@@ -28,13 +28,11 @@ namespace MDP_PPG.EntitiesEditing
 		{
 			InitializeComponent();
 
-			SignalPortReader = new SignalPortReader((s, b) => { StateMessage = s; _savedToMC = b; }, null, arg => IsLoadingData = arg);
-
 			DataContext = this;
 
 			_myContext = new PPG_Context();
 
-			LoadChannels();
+			LoadDataFromDB();
 		}
 
 		//------------------------------- GUI ------------------------------------
@@ -67,7 +65,15 @@ namespace MDP_PPG.EntitiesEditing
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(StateMessage)));
 			}
 		}
-		public SignalPortReader SignalPortReader { get; set; }
+		public SignalPortReader SignalPortReader
+		{
+			get => signalPortReader;
+			set
+			{
+				signalPortReader = value;
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SignalPortReader)));
+			}
+		}
 
 		//------------------------------- Event handlers -------------------------
 		private void Btn_Cansel_Click(object sender, RoutedEventArgs e)
@@ -93,11 +99,18 @@ namespace MDP_PPG.EntitiesEditing
 
 		//------------------------------- Other -------------------------
 
-		private async void LoadChannels()
+		private async void LoadDataFromDB()
 		{
 			IsLoadingData = true;
 
 			ChannelsList = await _myContext.SignalChannels.ToListAsync();
+
+			SignalPortReader = new SignalPortReader(
+				(s, b) => { StateMessage = s; _savedToMC = b; },
+				null,
+				arg => IsLoadingData = arg,
+				ChannelsList,
+				null);
 
 			IsLoadingData = false;
 		}
@@ -138,5 +151,6 @@ namespace MDP_PPG.EntitiesEditing
 		private bool _isLoadingData;
 		private string _stateMessage;
 		private bool _savedToMC = false;
+		private SignalPortReader signalPortReader;
 	}
 }

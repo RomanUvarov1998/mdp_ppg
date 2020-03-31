@@ -18,13 +18,12 @@ namespace MDP_PPG.ViewModels
 		}
 		private double PixelsPerDip;
 
-		public void SetData(SignalData instance, Size currentScale)
+		public void SetData(Recording instance, Size currentScale)
 		{
 			Instance = instance ?? throw new ArgumentNullException();
 
-			double[] values = MainFunctions.FromDatabaseToAnalysis(instance.Data);
+			SignalContainer.SetData(instance, 250.0, PixelsPerDip);
 
-			SignalContainer.SetData(values, 250.0, PixelsPerDip);
 			CurrentScale = currentScale;
 
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SizeInfo)));
@@ -43,7 +42,7 @@ namespace MDP_PPG.ViewModels
 				var notScaledRect = SignalContainer.AllPlotSize;
 
 				return new Size(
-					notScaledRect.Width * CurrentScale.Width, 
+					notScaledRect.Width * CurrentScale.Width,
 					notScaledRect.Height * CurrentScale.Height);
 			}
 		}
@@ -53,19 +52,18 @@ namespace MDP_PPG.ViewModels
 			RectWindow = rectWindow;
 			CurrentScale = currentScale;
 
-			PlotPoints = new PointCollection();
+			Plots = null;
 			X_Axis = new GeometryGroup();
 			Y_Axis = new GeometryGroup();
 			PlotGrid = new GeometryGroup();
 
 			SignalContainer.SetContainers(
-				PlotPoints, 
-				PlotGrid, 
-				X_Axis, 
-				Y_Axis, 
+				PlotGrid,
+				X_Axis,
+				Y_Axis,
 				RectWindow, CurrentScale);
 
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PlotPoints)));
+			Plots = SignalContainer.SignalDataChannelPlotVMs;
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(X_Axis)));
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Y_Axis)));
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PlotGrid)));
@@ -111,12 +109,20 @@ namespace MDP_PPG.ViewModels
 
 			UpdatePlot(RectWindow, CurrentScale);
 		}
-		
-		public SignalData Instance { get; private set; }
 
-		public string SizeInfo => Instance?.Data == null ? string.Empty : $"Размер {Instance.Data.Length.ToString("N")} байт";
+		public Recording Instance { get; private set; }
 
-		public PointCollection PlotPoints { get; set; } = new PointCollection();
+		public string SizeInfo => Instance == null ? string.Empty : $"Размер {Instance.SignalDatas.Sum(sd => sd.Data.Length).ToString("N")} байт";
+
+		public List<SignalDataChannelPlotVM> Plots 
+		{ 
+			get => plots;
+			set
+			{
+				plots = value;
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Plots)));
+			}
+		}
 		public GeometryGroup PlotGrid { get; set; } = new GeometryGroup();
 		public GeometryGroup X_Axis { get; set; } = new GeometryGroup();
 		public GeometryGroup Y_Axis { get; set; } = new GeometryGroup();
@@ -125,5 +131,8 @@ namespace MDP_PPG.ViewModels
 
 
 		public event PropertyChangedEventHandler PropertyChanged;
+
+
+		private List<SignalDataChannelPlotVM> plots = new List<SignalDataChannelPlotVM>();
 	}
 }

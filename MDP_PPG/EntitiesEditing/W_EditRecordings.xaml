@@ -23,8 +23,19 @@
                                     ErrMsgText="{x:Static km:Recording.DATE_TIME_FORMAT}"
                                     Margin="3"/>
 
-        <GroupBox Margin="3"
-                  Grid.Row="1">
+        <GroupBox Grid.Row="1" Margin="3">
+            <GroupBox.Header>
+                <TextBlock Text="Загруженные каналы:"
+                           VerticalAlignment="Center"
+                           Margin="3"/>
+            </GroupBox.Header>
+            
+            <TextBlock Text="{Binding InstanceVM.RecordedChannelsStr}"
+                       TextWrapping="Wrap"/>
+        </GroupBox>
+
+        <GroupBox Grid.Row="2"
+                  Margin="3">
 
             <GroupBox.Header>
                 <TextBlock Text="Загрузить из:"
@@ -48,11 +59,18 @@
                                    TextWrapping="Wrap"
                                    Margin="3"/>
                         
-                        <GroupBox Grid.Row="2" Header="Выбор порта:">
+                        <GroupBox Grid.Row="2" Header="Выбор порта:"
+                                  DataContext="{Binding MC_SignalReader}">
                             <StackPanel Orientation="Horizontal">
 
-                                <ListBox ItemsSource="{Binding MC_SignalReader.AvailablePorts}"
-                                     SelectedItem="{Binding MC_SignalReader.SelectedPort, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                <ListBox ItemsSource="{Binding AvailablePorts}"
+                                     SelectedItem="{Binding SelectedPort, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding}" TextWrapping="Wrap"/>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
 
                                 <Button Content="Обновить"
                                     Width="80"
@@ -117,7 +135,7 @@
 
         </GroupBox>
 
-        <WrapPanel Grid.Row="4" 
+        <WrapPanel Grid.Row="3" 
                    FlowDirection="RightToLeft"
                    Margin="3">
 

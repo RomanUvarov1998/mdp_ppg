@@ -11,7 +11,7 @@ namespace PPG_Database.KeepingModels
 	{
 		public Recording()
 		{
-
+			SignalDatas = new HashSet<SignalData>();
 		}
 		public Recording(int patientId) : this()
 		{
@@ -21,11 +21,14 @@ namespace PPG_Database.KeepingModels
 
 		public DateTime RecordingDateTime { get; set; }
 
+		[NotMapped]
+		public double Fs = 250;
+
 
 		//------------------- Navigation Fields -----------------------
 		public Patient Patient { get; set; }
 
-		public SignalData SignalData { get; set; }
+		public ICollection<SignalData> SignalDatas { get; set; }
 
 
 		//-------------------------------------- API ----------------------------------

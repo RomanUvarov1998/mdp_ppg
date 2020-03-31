@@ -38,7 +38,7 @@ namespace MDP_PPG.PagedViews
 				},
 				query => query.OrderByDescending(rec => rec.CreatedDate),
 				curItem => (item => DbFunctions.DiffDays(item.CreatedDate, curItem.CreatedDate) <= 0),
-				query => query.Include(r => r.SignalData));
+				query => query.Include(r => r.SignalDatas.Select(sd => sd.SignalChannel)));
 
 			DataContext = this;
 		}
@@ -47,41 +47,16 @@ namespace MDP_PPG.PagedViews
 
 		private void Btn_AddRec_Click(object sender, RoutedEventArgs e)
 		{
-			var dlg = new W_EditRecordings(new Recording(PagedView.ParentItem.Id));
-
-			var res = dlg.ShowDialog();
-
-			if (!res.GetValueOrDefault()) return;
-
-			PagedView.AddItemAsync(dlg.GetRecording());
+			var dlg = new W_EditRecordings(0, PagedView.ParentItem.Id);
+			dlg.ShowDialog();
+			PagedView.OnItemAdding();
 		}
 
 		private void ListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
 		{
-			var dlg = new W_EditRecordings(PagedView.SelectedItem.Instance);
-
-			var res = dlg.ShowDialog();
-
-			if (!res.GetValueOrDefault()) return;
-
-			var rec_m = dlg.GetRecording();
-			using (var context = new PPG_Context())
-			{
-				var rec = context.Recordings.Find(rec_m.Id);
-				rec.RecordingDateTime = rec_m.RecordingDateTime;
-
-				var sigd = context.SignalDatas.FirstOrDefault(sd => sd.RecordingId == rec_m.Id);
-				if (sigd == null)
-				{
-					sigd = new SignalData();
-					sigd.RecordingId = rec.Id;
-					context.SignalDatas.Add(sigd);
-				}
-
-				sigd.Data = rec_m.SignalData?.Data ?? null;
-
-				context.SaveChanges();
-			}
+			var dlg = new W_EditRecordings(PagedView.SelectedItem.Instance.Id, PagedView.ParentItem.Id);
+			dlg.ShowDialog();
+			PagedView.OnItemEditing();
 		}
 
 		private void Btn_DelRec_Click(object sender, RoutedEventArgs e)
@@ -127,7 +102,7 @@ namespace MDP_PPG.PagedViews
 		public bool BtnAnalyseIsEnabled => PagedView.SelectedItem?.Instance != null;
 		private void Btn_Analisys_Click(object sender, RoutedEventArgs e)
 		{
-			var dlg = new W_SignalAnalyser(PagedView.SelectedItem.Instance.SignalData);
+			var dlg = new W_SignalAnalyser(PagedView.SelectedItem.Instance);
 			dlg.ShowDialog();
 		}
 

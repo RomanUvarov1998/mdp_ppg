@@ -104,7 +104,7 @@
                 <GridView>
                     <GridView.Columns>
                         <GridViewColumn Header="Когда записан" DisplayMemberBinding="{Binding CreatedDate}"/>
-                        <GridViewColumn Header="Файл сигнала" DisplayMemberBinding="{Binding HasSignalFileStr}"/>
+                        <GridViewColumn Header="Записанные каналы" DisplayMemberBinding="{Binding RecordedChannelsStr}"/>
                     </GridView.Columns>
                 </GridView>
             </ListView.View>

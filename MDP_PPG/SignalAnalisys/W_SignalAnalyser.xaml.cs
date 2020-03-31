@@ -22,16 +22,16 @@ namespace MDP_PPG.SignalAnalisys
 	/// </summary>
 	public partial class W_SignalAnalyser : Window, INotifyPropertyChanged
 	{
-		public W_SignalAnalyser(SignalData signalData)
+		public W_SignalAnalyser(Recording recording)
 		{
 			InitializeComponent();
 
 			DataContext = this;
 
 			pvSignalPlot.PixelsPerDip = VisualTreeHelper.GetDpi(this).PixelsPerDip;
-			pvSignalPlot.GiveData(signalData);
+			pvSignalPlot.GiveData(recording);
 
-			analyser.GiveData(signalData);
+			analyser.GiveData(recording);
 		}
 
 		public event PropertyChangedEventHandler PropertyChanged;

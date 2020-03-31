@@ -8,23 +8,29 @@ using System.Threading.Tasks;
 
 namespace PPG_Database.KeepingModels
 {
-	public class SignalData
+	public class SignalData : ModelBase
 	{
 		public SignalData()
 		{
 				
 		}
-		public SignalData(byte[] data, int recordingId) : this()
-		{
-			Data = data;
-			RecordingId = recordingId;
-		}
+		//public SignalData(byte[] data, int recordingId) : this()
+		//{
+		//	Data = data;
+		//	RecordingId = recordingId;
+		//}
 
 		public int RecordingId { get; set; }
-		public DateTime CreatedDate { get; set; } = DateTime.Now;
+		public int SignalChannelId { get; set; }
 		public byte[] Data { get; set; }
 
 		//------------------- Navigation Fields -----------------------
 		public Recording Recording { get; set; }
+		public SignalChannel SignalChannel { get; set; }
+
+		public override bool UpdateSelfFields(ModelBase updatedModel)
+		{
+			throw new NotImplementedException();
+		}
 	}
 }

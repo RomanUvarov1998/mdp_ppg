@@ -19,9 +19,9 @@ namespace MDP_PPG.SignalAnalisys
 			DataContext = this;			
 		}
 
-		public void GiveData(SignalData signalData)
+		public void GiveData(Recording recording)
 		{
-			SignalData = signalData;
+			Recording = recording;
 
 			ValueCounters = new List<ValueCounter>()
 			{
@@ -66,7 +66,7 @@ namespace MDP_PPG.SignalAnalisys
 		}
 
 
-		private SignalData SignalData;
+		private Recording Recording;
 
 		private void Btn_CountValue_Click(object sender, RoutedEventArgs e)
 		{

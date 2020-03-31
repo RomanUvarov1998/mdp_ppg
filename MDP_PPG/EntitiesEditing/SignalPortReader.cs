@@ -14,8 +14,9 @@ namespace MDP_PPG.EntitiesEditing
 {
   public class SignalPortReader : SignalReader, INotifyPropertyChanged
   {
-    public SignalPortReader(Action<string, bool> notifyResult, Action onSignalUploadingCompleted, Action<bool> blockInterface)
-      : base(notifyResult, onSignalUploadingCompleted, blockInterface)
+    public SignalPortReader(Action<string, bool> notifyResult, Action onSignalUploadingCompleted, Action<bool> blockInterface,
+      List<SignalChannel> signalChannels, Recording recording)
+      : base(notifyResult, onSignalUploadingCompleted, blockInterface, signalChannels, recording)
     {
       // Create a new SerialPort object with default settings.
       _serialPort = new SerialPort();
@@ -131,9 +132,9 @@ namespace MDP_PPG.EntitiesEditing
         return;
       }
 
-      ChannelsMask = 0;
+      ChannelsMaskPC = 0;
       foreach (var ch in signalChannels)
-        if (ch.IsInUse) ChannelsMask |= (byte)(1 << ch.ChannelCode);
+        if (ch.IsInUse) ChannelsMaskPC |= (byte)(1 << ch.ChannelCode);
 
       BeginInteracting(Modes.SETTINGS);
     }
@@ -199,11 +200,11 @@ namespace MDP_PPG.EntitiesEditing
       switch (_mode)
       {
         case Modes.SIGNAL_UPLOADING:
-          SendByteToMC(MC_Tokens.GET_SIGNAL_LENGTH);
+          SendByteToMC(MC_Tokens.CHANNELS_MASK);
           break;
         case Modes.SETTINGS:
           SendByteToMC(MC_Tokens.SAVE_SETTINGS);
-          SendByteToMC((byte)ChannelsMask);
+          SendByteToMC((byte)ChannelsMaskPC);
           break;
       }
     }
@@ -248,6 +249,11 @@ namespace MDP_PPG.EntitiesEditing
       MyLog($"State is '{token}'");
       switch (token)
       {
+        case MC_Tokens.CHANNELS_MASK:
+          ChannelsMaskMC = ReadBuffer[1];
+
+          SendByteToMC(MC_Tokens.GET_SIGNAL_LENGTH);
+          break;
         case MC_Tokens.GET_SIGNAL_LENGTH:
           TotalValues = BitConverter.ToUInt32(ReadBuffer, 1);
 
@@ -261,7 +267,8 @@ namespace MDP_PPG.EntitiesEditing
             NotifyResult("Длина сигнала равна 0", false);
           }
 
-          PrepareRecordingLength(TotalValues);
+          PrepareRecordingChannels(ChannelsMaskMC, TotalValues);
+
           MyLog("");
 
           PrBarVis = Visibility.Visible;
@@ -269,6 +276,19 @@ namespace MDP_PPG.EntitiesEditing
           SendByteToMC(MC_Tokens.GET_DATA);
           break;
         case MC_Tokens.GET_DATA:
+          int channel = ReadBuffer[1];
+          UInt16 value = BitConverter.ToUInt16(ReadBuffer, 2);
+
+          MyLog($"Got '{value}': {ValuesLoaded}/{TotalValues}");
+          PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ValuesLoaded)));
+
+          if (SignalValueNums.ContainsKey(channel))
+            SignalValueNums[channel]++;
+          else
+            throw new Exception($"Несуществующий канал '{channel}' (((");
+
+          ValuesLoaded = SignalValueNums.Values.Max();
+
           if (ValuesLoaded > TotalValues)
           {
             TurnOff();
@@ -277,19 +297,25 @@ namespace MDP_PPG.EntitiesEditing
             return;
           }
 
-          UInt16 value = BitConverter.ToUInt16(ReadBuffer, 1);
+          if (SignalDataBuffers.ContainsKey(channel))
+            SignalDataBuffers[channel][SignalValueNums[channel] - 1] = value;
+          else
+            throw new Exception($"Несуществующий канал '{channel}' (((");
 
-          MyLog($"Got '{value}': {ValuesLoaded}/{TotalValues}");
-          PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ValuesLoaded)));
+          SendByteToMC(MC_Tokens.GET_DATA);
 
-          checked { ++ValuesLoaded; }
-          ValuesBuffer[ValuesLoaded - 1] = value;
           break;
         case MC_Tokens.DATA_END:
           if (!SignalIsCorrupted)
           {
             NotifyResult("Сигнал успешно передан", true);
-            this.Recording.SignalData.Data = MainFunctions.FromMcToDatabase(ValuesBuffer);
+
+            foreach (var cc in SignalDataBuffers.Keys)
+            {
+              SignalData sd = this.Recording.SignalDatas.First(_sd => _sd.SignalChannel.ChannelCode == cc);
+
+              sd.Data = MainFunctions.FromMcToDatabase(SignalDataBuffers[cc]);
+            }
           }
           else
             NotifyResult("Сигнал был поврежден во время передачи", true);
@@ -297,7 +323,7 @@ namespace MDP_PPG.EntitiesEditing
           BlockInterface(false);
           break;
         case MC_Tokens.SAVE_SETTINGS:
-          if (ChannelsMask == ReadBuffer[1])
+          if (ChannelsMaskPC == ReadBuffer[1])
           {
             NotifyResult("Настройки успешно сохранены", true);
             BlockInterface(false);
@@ -350,9 +376,10 @@ namespace MDP_PPG.EntitiesEditing
     private Modes _mode;
     enum MC_Tokens : Byte
     {
-      GET_SIGNAL_LENGTH = 1,
-      GET_DATA = 2,
-      DATA_END = 3,
+      CHANNELS_MASK = 1,
+      GET_SIGNAL_LENGTH = 2,
+      GET_DATA = 3,
+      DATA_END = 4,
       SAVE_SETTINGS = 5,
     }
     private string[] _availablePorts;

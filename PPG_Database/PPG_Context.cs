@@ -72,13 +72,17 @@ namespace PPG_Database
 				.HasForeignKey(r => r.PatientId)
 				.WillCascadeOnDelete(true);
 
-			modelBuilder.Entity<SignalData>()
-				.HasKey(d => d.RecordingId);
-
 			modelBuilder.Entity<Recording>()
-				.HasOptional(r => r.SignalData)
-				.WithRequired(d => d.Recording)
+				.HasMany(r => r.SignalDatas)
+				.WithRequired(sd => sd.Recording)
+				.HasForeignKey(sd => sd.RecordingId)
 				.WillCascadeOnDelete(true);
+
+			modelBuilder.Entity<SignalData>()
+				.HasRequired(sd => sd.SignalChannel)
+				.WithMany()
+				.HasForeignKey(sd => sd.SignalChannelId)
+				.WillCascadeOnDelete(false);
 		}
 	}
 }

@@ -58,11 +58,12 @@
                    Text="{Binding StateMessage}"
                    TextWrapping="Wrap"/>
 
-        <GroupBox Grid.Row="2" Header="Выбор порта:">
+        <GroupBox Grid.Row="2" Header="Выбор порта:"
+                  DataContext="{Binding SignalPortReader}">
             <StackPanel Orientation="Horizontal">
 
-                <ListBox ItemsSource="{Binding SignalPortReader.AvailablePorts}"
-                     SelectedItem="{Binding SignalPortReader.SelectedPort, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                <ListBox ItemsSource="{Binding AvailablePorts}"
+                     SelectedItem="{Binding SelectedPort, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
 
                 <Button Content="Обновить"
                     Width="80"
