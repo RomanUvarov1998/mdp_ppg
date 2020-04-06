@@ -29,7 +29,7 @@ namespace MDP_PPG.ViewModels
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SizeInfo)));
 		}
 
-		private SignalContainer SignalContainer = new SignalContainer();
+		private PlotValuesCounter SignalContainer = new PlotValuesCounter();
 
 		private Size CurrentScale;
 		private Rect RectWindow;
@@ -63,7 +63,7 @@ namespace MDP_PPG.ViewModels
 				Y_Axis,
 				RectWindow, CurrentScale);
 
-			Plots = SignalContainer.SignalDataChannelPlotVMs;
+			Plots = SignalContainer.PlotDataKeepers;
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(X_Axis)));
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Y_Axis)));
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PlotGrid)));
@@ -114,7 +114,7 @@ namespace MDP_PPG.ViewModels
 
 		public string SizeInfo => Instance == null ? string.Empty : $"Размер {Instance.SignalDatas.Sum(sd => sd.Data.Length).ToString("N")} байт";
 
-		public List<SignalDataChannelPlotVM> Plots 
+		public List<PlotDataKeeper> Plots 
 		{ 
 			get => plots;
 			set
@@ -133,6 +133,6 @@ namespace MDP_PPG.ViewModels
 		public event PropertyChangedEventHandler PropertyChanged;
 
 
-		private List<SignalDataChannelPlotVM> plots = new List<SignalDataChannelPlotVM>();
+		private List<PlotDataKeeper> plots = new List<PlotDataKeeper>();
 	}
 }
