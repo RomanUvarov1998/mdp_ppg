@@ -22,12 +22,12 @@
                 <MultiDataTrigger>
                     <MultiDataTrigger.Conditions>
                         <Condition  Binding="{Binding IsLoadingData}" Value="False"/>
-                        <Condition  Binding="{Binding Plot}" Value="{x:Null}"/>
+                        <Condition  Binding="{Binding SignalDataGV}" Value="{x:Null}"/>
                     </MultiDataTrigger.Conditions>
                     <Setter Property="Template">
                         <Setter.Value>
                             <ControlTemplate TargetType="ContentControl">
-                                <TextBlock Text="{Binding Plot, Converter={StaticResource parent2MessageConverter}}" 
+                                <TextBlock Text="{Binding SignalDataGV, Converter={StaticResource parent2MessageConverter}}" 
                                            TextWrapping="Wrap"
                                            HorizontalAlignment="Center"
                                            VerticalAlignment="Center"/>
@@ -73,7 +73,7 @@
                      Width="auto"
                      Margin="3,3,10,3"/>
 
-            <TextBlock Text="{Binding Plot.SizeInfo}"
+            <TextBlock Text="{Binding SignalDataGV.SizeInfo}"
                        Margin="3"
                        FontWeight="Bold"/>
 
@@ -84,8 +84,8 @@
                                Margin="3"
                                FontWeight="Bold"/>
                 </GroupBox.Header>
-                
-                <ItemsControl ItemsSource="{Binding Plot.Plots}">
+
+                <ItemsControl ItemsSource="{Binding SignalDataGV.Plots}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal">
@@ -132,7 +132,7 @@
                 <Grid Grid.Row="0" Grid.Column="1"
                       Background="White"
                       HorizontalAlignment="Right">
-                    <Path Data="{Binding Plot.Y_Axis}"
+                    <Path Data="{Binding SignalDataGV.Y_Axis}"
                               Stroke="Black"
                               StrokeThickness="1"
                               SnapsToDevicePixels="True"/>
@@ -154,7 +154,7 @@
                       MinWidth="100"
                       MinHeight="100">
 
-                    <ItemsControl ItemsSource="{Binding Plot.Plots}">
+                    <ItemsControl ItemsSource="{Binding SignalDataGV.Plots}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Polyline Points="{Binding Points}"
@@ -173,19 +173,19 @@
                         </ItemsControl.ItemsPanel>
                     </ItemsControl>
 
-                    <Path Data="{Binding Plot.PlotGrid}" 
+                    <Path Data="{Binding SignalDataGV.PlotGrid}" 
                             Stroke="Gray" 
                             StrokeThickness="1"
                             SnapsToDevicePixels="True"
                             HorizontalAlignment="Left"/>
 
-                    <Path Data="{Binding Plot.HighLightedPoint}" 
+                    <Path Data="{Binding SignalDataGV.HighLightedPoint}" 
                             Stroke="Red" 
                             StrokeThickness="2"
                             SnapsToDevicePixels="True"
                             HorizontalAlignment="Left"/>
 
-                    <Path Data="{Binding Plot.HighLightedPointText}" 
+                    <Path Data="{Binding SignalDataGV.HighLightedPointText}" 
                             Stroke="Black" 
                             StrokeThickness="1"
                             SnapsToDevicePixels="True"
@@ -199,7 +199,7 @@
                       VerticalAlignment="Stretch"
                       HorizontalAlignment="Stretch">
 
-                    <Path Data="{Binding Plot.X_Axis}"
+                    <Path Data="{Binding SignalDataGV.X_Axis}"
                               Stroke="Black"
                               StrokeThickness="1"
                               SnapsToDevicePixels="True"/>

@@ -45,6 +45,8 @@ namespace MDP_PPG.PagedViews
 
 
 		//--------------------------------------- Gui props -------------------------------------------
+		public event PropertyChangedEventHandler PropertyChanged;
+
 		public bool IsLoadingData
 		{
 			get => isLoadingData;
@@ -56,15 +58,7 @@ namespace MDP_PPG.PagedViews
 			}
 		}
 		public bool IsInterfaceEnabled => !isLoadingData;
-		public RectangleGeometry PlotClip
-		{
-			get => plotClip;
-			set
-			{
-				plotClip = value;
-				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PlotClip)));
-			}
-		}
+
 		public double Max_X
 		{
 			get => max_X;
@@ -74,15 +68,16 @@ namespace MDP_PPG.PagedViews
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Max_X)));
 			}
 		}
-		public double X_Axis_ViewportSize
+		public double Max_Y
 		{
-			get => x_Axis_ViewportSize;
+			get => max_Y;
 			set
 			{
-				x_Axis_ViewportSize = value;
-				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(X_Axis_ViewportSize)));
+				max_Y = value;
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Max_Y)));
 			}
 		}
+
 		public double ScrollValue_X
 		{
 			get => scrollValue_X;
@@ -93,15 +88,6 @@ namespace MDP_PPG.PagedViews
 				if (value > Max_X) scrollValue_X = Max_X;
 
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ScrollValue_X)));
-			}
-		}
-		public double Max_Y
-		{
-			get => max_Y;
-			set
-			{
-				max_Y = value;
-				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Max_Y)));
 			}
 		}
 		public double ScrollValue_Y
@@ -116,6 +102,16 @@ namespace MDP_PPG.PagedViews
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ScrollValue_Y)));
 			}
 		}
+
+		public double X_Axis_ViewportSize
+		{
+			get => x_Axis_ViewportSize;
+			set
+			{
+				x_Axis_ViewportSize = value;
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(X_Axis_ViewportSize)));
+			}
+		}
 		public double Y_Axis_ViewportSize
 		{
 			get => y_Axis_ViewportSize;
@@ -125,6 +121,7 @@ namespace MDP_PPG.PagedViews
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Y_Axis_ViewportSize)));
 			}
 		}
+
 		public string Y_ScaleStr
 		{
 			get => y_ScaleStr;
@@ -136,7 +133,7 @@ namespace MDP_PPG.PagedViews
 				if (double.TryParse(value, out v) && v > 0)
 				{
 					CurrentScale.Height = v;
-					Plot?.SetYScale(CurrentScale.Height);
+					SignalDataGV?.SetYScale(CurrentScale.Height);
 					UpdateScrollBars(false, RectWindowCenterLocal);
 				}
 
@@ -154,23 +151,34 @@ namespace MDP_PPG.PagedViews
 				if (double.TryParse(value, out v) && v > 0)
 				{
 					CurrentScale.Width = v;
-					Plot?.SetXScale(CurrentScale.Width);
+					SignalDataGV?.SetXScale(CurrentScale.Width);
 					UpdateScrollBars(false, RectWindowCenterLocal);
 				}
 
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SampleWidthStr)));
 			}
 		}
-		public SignalDataGV Plot
+
+		public Cursor PlotCursor => IsMouseRightButtonDown ? Cursors.ScrollAll : Cursors.Cross;
+
+		public RectangleGeometry PlotClip
+		{
+			get => plotClip;
+			set
+			{
+				plotClip = value;
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PlotClip)));
+			}
+		}
+		public SignalDataGV SignalDataGV
 		{
 			get => plot;
 			set
 			{
 				plot = value;
-				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Plot)));
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SignalDataGV)));
 			}
 		}
-		public Cursor PlotCursor => IsMouseRightButtonDown ? Cursors.ScrollAll : Cursors.Cross;
 
 
 		//--------------------------------------- API ---------------------------------------------
@@ -180,7 +188,7 @@ namespace MDP_PPG.PagedViews
 		{
 			if (recording == null)
 			{
-				Plot = null;
+				SignalDataGV = null;
 				IsLoadingData = false;
 				return;
 			}
@@ -208,8 +216,8 @@ namespace MDP_PPG.PagedViews
 		{
 			if (rec != null)
 			{
-				Plot = new SignalDataGV(PixelsPerDip);
-				Plot.SetData(rec, CurrentScale);
+				SignalDataGV = new SignalDataGV(PixelsPerDip);
+				SignalDataGV.SetData(rec, CurrentScale);
 				plotGrid.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
 				OnWindowResized();
 			}
@@ -218,8 +226,8 @@ namespace MDP_PPG.PagedViews
 		{
 			UpdatePlotClip();
 			UpdateScrollBars(false, RectWindowCenterLocal);
-			Plot?.UpdatePlot(RectWindow, CurrentScale);
-			Plot?.ClearHighlightedPoint();
+			SignalDataGV?.UpdatePlot(RectWindow, CurrentScale);
+			SignalDataGV?.ClearHighlightedPoint();
 		}
 
 
@@ -228,7 +236,7 @@ namespace MDP_PPG.PagedViews
 		{
 			Point currentMousePosition = e.GetPosition(plotGrid);
 
-			Plot?.HighLightPointNearestTo(currentMousePosition);
+			SignalDataGV?.HighLightPointNearestTo(currentMousePosition);
 
 			if (Mouse.RightButton == MouseButtonState.Released)
 				IsMouseRightButtonDown = false;
@@ -240,13 +248,13 @@ namespace MDP_PPG.PagedViews
 
 				MouseRightButtonDownPoint = currentMousePosition;
 
-				Plot?.UpdatePlot(RectWindow, CurrentScale);
+				SignalDataGV?.UpdatePlot(RectWindow, CurrentScale);
 			}
 		}
 		private void Plot_MouseLeave(object sender, MouseEventArgs e)
 		{
 			IsMouseRightButtonDown = false;
-			Plot?.ClearHighlightedPoint();
+			SignalDataGV?.ClearHighlightedPoint();
 		}
 		private bool IsMouseRightButtonDown
 		{
@@ -274,7 +282,7 @@ namespace MDP_PPG.PagedViews
 
 		private void Plot_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
 		{
-			if (Plot == null) return;
+			if (SignalDataGV == null) return;
 			if (IsMouseRightButtonDown) return;
 
 			if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))
@@ -285,7 +293,7 @@ namespace MDP_PPG.PagedViews
 				double deltaScale = 1.0 + Math.Sign(e.Delta) * 0.1;
 				CurrentScale = new Size(CurrentScale.Width * deltaScale, CurrentScale.Height * deltaScale);
 
-				Plot.Change_XY_Scale(RectWindow, CurrentScale);
+				SignalDataGV.Change_XY_Scale(RectWindow, CurrentScale);
 				UpdateScrollBars(false, mousePosLocal);
 
 				sampleWidthStr = CurrentScale.Width.ToString();
@@ -313,18 +321,18 @@ namespace MDP_PPG.PagedViews
 				e.Handled = true;
 			}
 
-			Plot.UpdatePlot(RectWindow, CurrentScale);
-			Plot.RefreshHighlightedPoint();
+			SignalDataGV.UpdatePlot(RectWindow, CurrentScale);
+			SignalDataGV.RefreshHighlightedPoint();
 		}
 		private void SbX_Scroll(object sender, ScrollEventArgs e)
 		{
-			Plot?.UpdatePlot(RectWindow, CurrentScale);
-			Plot?.RefreshHighlightedPoint();
+			SignalDataGV?.UpdatePlot(RectWindow, CurrentScale);
+			SignalDataGV?.RefreshHighlightedPoint();
 		}
 		private void SbY_Scroll(object sender, ScrollEventArgs e)
 		{
-			Plot?.UpdatePlot(RectWindow, CurrentScale);
-			Plot?.RefreshHighlightedPoint();
+			SignalDataGV?.UpdatePlot(RectWindow, CurrentScale);
+			SignalDataGV?.RefreshHighlightedPoint();
 		}
 
 
@@ -335,13 +343,13 @@ namespace MDP_PPG.PagedViews
 		}
 		private void UpdateScrollBars(bool reset, Point anchorPointLocal)
 		{
-			if (Plot == null) return;
+			if (SignalDataGV == null) return;
 
 			double prevMaxX = Max_X;
 			double prevMaxY = Max_Y;
 
 			Rect curRect = RectWindow;
-			Size plotScaledSize = Plot.AllPlotSize_Scaled;
+			Size plotScaledSize = SignalDataGV.AllPlotSize_Scaled;
 
 			Max_X = Math.Max(0.0, plotScaledSize.Width - curRect.Width) + 50;
 			Max_Y = Math.Max(0.0, plotScaledSize.Height - curRect.Height) + 50;
@@ -375,7 +383,6 @@ namespace MDP_PPG.PagedViews
 
 
 		//--------------------------------------- Visual Info ---------------------------------------
-
 		private Size CurrentScale;
 		private Rect RectWindow => new Rect(
 			ScrollValue_X,
@@ -386,9 +393,7 @@ namespace MDP_PPG.PagedViews
 			new Point(plotGrid.ActualWidth / 2.0, plotGrid.ActualHeight / 2.0);
 
 
-		public event PropertyChangedEventHandler PropertyChanged;
-
-
+		//--------------------------------------- Private ---------------------------------------
 		private bool isLoadingData;
 		private SignalDataGV plot;
 		private string sampleWidthStr;
