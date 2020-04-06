@@ -260,7 +260,8 @@ namespace MDP_PPG.EntitiesEditing
 
 				if (this.CancellationPending) goto BackgroundWorkCanceled;
 
-				_recordingRxModel.AppendValue(_readBuffer[1], _readBuffer, 2);
+				double value = BitConverter.ToUInt16(_readBuffer, 2);
+				_recordingRxModel.AppendValue(_readBuffer[1], value);
 				_notifyRecieved.Invoke(_recordingRxModel.RecievedValues);
 			}
 
@@ -333,7 +334,6 @@ namespace MDP_PPG.EntitiesEditing
 			RECORDING_UPLOADING
 		}
 		private Modes _mode;
-		private bool canBeStarted;
 	}
 
 	public class RecordingRxModel
@@ -350,9 +350,8 @@ namespace MDP_PPG.EntitiesEditing
 					_channelBuffers.Add(i, new ChannelBuffer(length, i));
 		}
 
-		public void AppendValue(int channelCode, byte[] buffer, int startIndex)
+		public void AppendValue(int channelCode, double value)
 		{
-			UInt16 value = BitConverter.ToUInt16(buffer, startIndex);
 			_channelBuffers[channelCode].AppendValue(value);
 		}
 
@@ -376,11 +375,11 @@ namespace MDP_PPG.EntitiesEditing
 	{
 		public ChannelBuffer(UInt32 length, int channelCode)
 		{
-			_valuesBuffer = new UInt16[length];
+			_valuesBuffer = new double[length];
 			_channelCode = channelCode;
 		}
 
-		public void AppendValue(UInt16 value)
+		public void AppendValue(double value)
 		{
 			_valuesBuffer[ValueNum] = value;
 			++ValueNum;
@@ -401,7 +400,7 @@ namespace MDP_PPG.EntitiesEditing
 
 		public UInt32 ValueNum = 0;
 
-		private UInt16[] _valuesBuffer;
+		private double[] _valuesBuffer;
 		private int _channelCode;
 	}
 }

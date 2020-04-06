@@ -4,6 +4,7 @@ using PPG_Database.KeepingModels;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -20,12 +21,11 @@ namespace MDP_PPG.EntitiesEditing
 		{
 			OF_Dialog = new OpenFileDialog();
 			OF_Dialog.Filter = "Текстовые файлы|*.txt|Бинарные файлы|*.dat;*.bin";
+			_recordingRxModel = new RecordingRxModel();
 		}
 
 		public override void TryUploadSignal(Recording recording)
 		{
-			throw new NotImplementedException();
-
 			string path;
 
 			if (OF_Dialog.ShowDialog() == true)
@@ -33,35 +33,58 @@ namespace MDP_PPG.EntitiesEditing
 			else return;
 
 			byte[] data;
-
+					 
 			try
 			{
 				string extension = Path.GetExtension(path);
-				switch (extension)
+				if (!extension.Equals(".txt"))
+					throw new Exception("Не .txt файлы еще не сделаны (((");
+
+				var ci = new CultureInfo("en-us");
+				using (var sr = new StreamReader(path))
 				{
-					case ".txt":
-						string[] lines = File.ReadAllLines(path);
-						data = MainFunctions.FromStringLinesFileToDatabase(lines);
-						break;
-					case ".dat":
-						data = File.ReadAllBytes(path);
-						break;
-					case ".bin":
-						data = File.ReadAllBytes(path);
-						break;
-					default:
-						throw new Exception();
+					string line = sr.ReadLine();
+					if (line == null) throw new Exception("Нет списка каналов (((");
+					int[] channelsCodes = line.Split('\t').Select(s => int.Parse(s)).ToArray();
+					
+					line = sr.ReadLine();
+					if (line == null) throw new Exception("Нет количества значений (((");
+					UInt32 signalLength = (UInt32)double.Parse(line, ci);
+
+					int channelsMask = 0;
+					foreach (var chc in channelsCodes)
+						channelsMask |= (1 << chc);
+
+					_recordingRxModel.PrepareToRecieve(channelsMask, signalLength);
+
+					for (UInt32 i = 0; i < signalLength; ++i)
+					{
+						line = sr.ReadLine();
+						if (line == null) throw new Exception("Присутствуют не все отсчеты сигнала (((");
+						double[] values = line.Split('\t').Select(s => double.Parse(s, ci)).ToArray();
+						for (int v = 0; v < values.Length; ++v)
+						{
+							_recordingRxModel.AppendValue(channelsCodes[v], values[v]);
+						}
+					}
+
+					if (!_recordingRxModel.CheckIsFull())
+						throw new Exception("Сигнал был получен не полностью (((");
 				}
 			}
 			catch (Exception ex)
 			{
 				MessageBox.Show(ex.Message, ex.Source);
 				NotifyResult("Ошибка чтения файла", false);
+				BlockInterface(false);
 				return;
 			}
 
-			NotifyResult($"Файл '{Path.GetFileName(path)}' успешно загружен", false);
+			NotifyResult($"Файл '{Path.GetFileName(path)}' успешно загружен", true);
 			//this.Recording.SignalData.Data = data;
+
+			_recordingRxModel.PutInModel(Recording, SignalChannels);
+			BlockInterface(false);
 		}
 
 		public override void TurnOff()
@@ -71,6 +94,7 @@ namespace MDP_PPG.EntitiesEditing
 
 
 		private OpenFileDialog OF_Dialog;
+		private RecordingRxModel _recordingRxModel;
 
 
 		public event PropertyChangedEventHandler PropertyChanged;
