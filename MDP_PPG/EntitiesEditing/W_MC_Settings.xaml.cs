@@ -65,13 +65,13 @@ namespace MDP_PPG.EntitiesEditing
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(StateMessage)));
 			}
 		}
-		public SignalPortReader SignalPortReader
+		public SerialPortConnector SerialPortConnector
 		{
-			get => signalPortReader;
+			get => signalPortConnector;
 			set
 			{
-				signalPortReader = value;
-				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SignalPortReader)));
+				signalPortConnector = value;
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SerialPortConnector)));
 			}
 		}
 
@@ -90,7 +90,7 @@ namespace MDP_PPG.EntitiesEditing
 		}
 		private void Btn_refreshPortsList_Click(object sender, RoutedEventArgs e)
 		{
-			SignalPortReader.RefreshPortsList();
+			SerialPortConnector.RefreshPortsList();
 		}
 		private void Window_Closing(object sender, CancelEventArgs e)
 		{
@@ -105,12 +105,11 @@ namespace MDP_PPG.EntitiesEditing
 
 			ChannelsList = await _myContext.SignalChannels.ToListAsync();
 
-			SignalPortReader = new SignalPortReader(
+			SerialPortConnector = new SerialPortConnector(
 				(s, b) => { StateMessage = s; _savedToMC = b; },
-				null,
-				arg => IsLoadingData = arg,
-				ChannelsList,
-				null);
+				arg => IsLoadingData = arg);
+			SerialPortConnector.RefreshPortsList();
+			SerialPortConnector.SelectedPort = SerialPortConnector.AvailablePorts.FirstOrDefault();
 
 			IsLoadingData = false;
 		}
@@ -141,7 +140,7 @@ namespace MDP_PPG.EntitiesEditing
 		private void SaveToMC()
 		{
 			StateMessage = "Сохранение настроек на МК...";
-			SignalPortReader.TrySavelSettingsToMC(ChannelsList);
+			SerialPortConnector.SaveSettings(ChannelsList);
 		}
 
 		public event PropertyChangedEventHandler PropertyChanged;
@@ -151,6 +150,6 @@ namespace MDP_PPG.EntitiesEditing
 		private bool _isLoadingData;
 		private string _stateMessage;
 		private bool _savedToMC = false;
-		private SignalPortReader signalPortReader;
+		private SerialPortConnector signalPortConnector;
 	}
 }

@@ -201,9 +201,11 @@ namespace MDP_PPG.EntitiesEditing
       {
         case Modes.SIGNAL_UPLOADING:
           SendByteToMC(MC_Tokens.CHANNELS_MASK);
+          MyLog($"{MC_Tokens.CHANNELS_MASK} ->");
           break;
         case Modes.SETTINGS:
           SendByteToMC(MC_Tokens.SAVE_SETTINGS);
+          MyLog($"{MC_Tokens.SAVE_SETTINGS} ->");
           SendByteToMC((byte)ChannelsMaskPC);
           break;
       }
@@ -216,7 +218,7 @@ namespace MDP_PPG.EntitiesEditing
 
       try
       {
-        while (!SignalIsCorrupted && _serialPort.BytesToRead > 0)
+        while (!SignalIsCorrupted && _serialPort.IsOpen && _serialPort.BytesToRead > 0)
         {
           int b = _serialPort.ReadByte(); MyLog($" - {bytePos} {b}");
           ReadBuffer[bytePos] = (byte)b;
@@ -253,6 +255,7 @@ namespace MDP_PPG.EntitiesEditing
           ChannelsMaskMC = ReadBuffer[1];
 
           SendByteToMC(MC_Tokens.GET_SIGNAL_LENGTH);
+          MyLog($"{MC_Tokens.GET_SIGNAL_LENGTH} ->");
           break;
         case MC_Tokens.GET_SIGNAL_LENGTH:
           TotalValues = BitConverter.ToUInt32(ReadBuffer, 1);
@@ -274,6 +277,7 @@ namespace MDP_PPG.EntitiesEditing
           PrBarVis = Visibility.Visible;
 
           SendByteToMC(MC_Tokens.GET_DATA);
+          MyLog($"{MC_Tokens.GET_DATA} ->");
           break;
         case MC_Tokens.GET_DATA:
           int channel = ReadBuffer[1];
@@ -303,6 +307,7 @@ namespace MDP_PPG.EntitiesEditing
             throw new Exception($"Несуществующий канал '{channel}' (((");
 
           SendByteToMC(MC_Tokens.GET_DATA);
+          MyLog($"{MC_Tokens.GET_DATA} ->");
 
           break;
         case MC_Tokens.DATA_END:
@@ -321,15 +326,18 @@ namespace MDP_PPG.EntitiesEditing
             NotifyResult("Сигнал был поврежден во время передачи", true);
 
           BlockInterface(false);
+          TurnOff();
           break;
         case MC_Tokens.SAVE_SETTINGS:
           if (ChannelsMaskPC == ReadBuffer[1])
           {
+            TurnOff();
             NotifyResult("Настройки успешно сохранены", true);
             BlockInterface(false);
           }
           else
           {
+            TurnOff();
             NotifyResult("Не удалось успешно сохранить настройки", false);
             BlockInterface(false);
           }

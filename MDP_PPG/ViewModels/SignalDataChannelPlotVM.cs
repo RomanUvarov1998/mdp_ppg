@@ -47,6 +47,8 @@ namespace MDP_PPG.ViewModels
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PlotBrush)));
 			}
 		}
+		public string ChannelName => Instance.SignalChannel.Name;
+		public string ChannelCode => Instance.SignalChannel.ChannelCode.ToString();
 
 
 		public event PropertyChangedEventHandler PropertyChanged;

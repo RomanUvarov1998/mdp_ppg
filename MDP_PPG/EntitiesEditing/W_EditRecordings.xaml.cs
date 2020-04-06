@@ -43,13 +43,13 @@ namespace MDP_PPG.EntitiesEditing
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(F_SignalReader)));
 			}
 		}
-		public SignalPortReader MC_SignalReader
+		public SerialPortConnector SerialPortConnector
 		{
-			get => mC_SignalReader;
+			get => serialPortConnector;
 			set
 			{
-				mC_SignalReader = value;
-				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(MC_SignalReader)));
+				serialPortConnector = value;
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SerialPortConnector)));
 			}
 		}
 		public RecordingTVM InstanceVM
@@ -59,6 +59,25 @@ namespace MDP_PPG.EntitiesEditing
 			{
 				instanceVM = value;
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(InstanceVM)));
+			}
+		}
+
+		public UInt32 TotalValues
+		{
+			get => totalValues;
+			set
+			{
+				totalValues = value;
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TotalValues)));
+			}
+		}
+		public UInt32 RecievedValues
+		{
+			get => recievedValues;
+			set
+			{
+				recievedValues = value;
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(RecievedValues)));
 			}
 		}
 
@@ -103,25 +122,18 @@ namespace MDP_PPG.EntitiesEditing
 		}
 		private void Btn_LoadRecording_FromMC_Click(object sender, RoutedEventArgs e)
 		{
-			if (MC_SignalReader.SelectedPort == null)
-			{
-				PortMessage = "Выберите порт для передачи сигнала с микроконтроллера";
-				return;
-			}
-
-			if (!MC_SignalReader.CheckSelectedPortExists())
-			{
-				PortMessage = "Данный порт больше не существует, выберите другой порт";
-				return;
-			}
-
-			MC_SignalReader.TryUploadSignal(Instance);
+			SerialPortConnector.ResieveRecording(
+				Instance,
+				SignalChannels,
+				v => TotalValues = v,
+				v => RecievedValues = v);
 		}
 
 
 		private void Btn_refreshPortsList_Click(object sender, RoutedEventArgs e)
 		{
-			MC_SignalReader.RefreshPortsList();
+			//MC_SignalReader.RefreshPortsList();
+			SerialPortConnector.RefreshPortsList();
 		}
 
 
@@ -146,7 +158,7 @@ namespace MDP_PPG.EntitiesEditing
 					MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
 
 			F_SignalReader.TurnOff();
-			MC_SignalReader.TurnOff();
+			SerialPortConnector.TurnOff();
 
 			Instance.RecordingDateTime = ParsedDateTime.Value;
 
@@ -217,12 +229,12 @@ namespace MDP_PPG.EntitiesEditing
 				arg => IsLoadingData = arg,
 				SignalChannels,
 				Instance);
-			MC_SignalReader = new SignalPortReader(
+
+			SerialPortConnector = new SerialPortConnector(
 				(s, b) => { PortMessage = s; DataFileIsLoaded = b; },
-				CheckSignalData,
-				arg => IsLoadingData = arg,
-				SignalChannels,
-				Instance);
+				arg => IsLoadingData = arg);
+			SerialPortConnector.RefreshPortsList();
+			SerialPortConnector.SelectedPort = SerialPortConnector.AvailablePorts.FirstOrDefault();
 
 			DataFileIsLoaded = Instance.SignalDatas.Count > 0;
 
@@ -285,6 +297,9 @@ namespace MDP_PPG.EntitiesEditing
 		private bool isLoadingData = true;
 		private RecordingTVM instanceVM;
 		private SignalFileReader f_SignalReader;
-		private SignalPortReader mC_SignalReader;
+		private SerialPortConnector serialPortConnector;
+		private uint totalValues;
+		private uint recievedValues;
+		//private SignalPortReader mC_SignalReader;
 	}
 }

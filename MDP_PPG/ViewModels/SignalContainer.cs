@@ -28,11 +28,14 @@ namespace MDP_PPG.ViewModels
 
 			Ts = 1.0 / recording.Fs;
 
-			Min_X = 0.0;
-			Max_X = SignalDataChannelPlotVMs.Select(vm => vm.Values.Length).Max() * Ts;
+			if (SignalDataChannelPlotVMs.Count > 0)
+			{
+				Min_X = 0.0;
+				Max_X = SignalDataChannelPlotVMs.Select(vm => vm.Values.Length).Max() * Ts;
 
-			Min_Y = SignalDataChannelPlotVMs.Select(vm => vm.Values.Min()).Min();
-			Max_Y = SignalDataChannelPlotVMs.Select(vm => vm.Values.Max()).Max();
+				Min_Y = SignalDataChannelPlotVMs.Select(vm => vm.Values.Min()).Min();
+				Max_Y = SignalDataChannelPlotVMs.Select(vm => vm.Values.Max()).Max();
+			}
 
 			X_Range = Max_X - Min_X;
 			Y_Range = Max_Y - Min_Y;

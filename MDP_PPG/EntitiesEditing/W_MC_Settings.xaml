@@ -30,8 +30,10 @@
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
-                        <GridViewColumn Header="№" DisplayMemberBinding="{Binding ChannelCode}"/>
-                        <GridViewColumn Header="Название" DisplayMemberBinding="{Binding Name}"/>
+                        <GridViewColumn Header="№" DisplayMemberBinding="{Binding ChannelCode}"
+                                        Width="30"/>
+                        <GridViewColumn Header="Название" DisplayMemberBinding="{Binding Name}"
+                                        Width="100"/>
                     </GridView>
                 </ListView.View>
 
@@ -59,7 +61,7 @@
                    TextWrapping="Wrap"/>
 
         <GroupBox Grid.Row="2" Header="Выбор порта:"
-                  DataContext="{Binding SignalPortReader}">
+                  DataContext="{Binding SerialPortConnector}">
             <StackPanel Orientation="Horizontal">
 
                 <ListBox ItemsSource="{Binding AvailablePorts}"

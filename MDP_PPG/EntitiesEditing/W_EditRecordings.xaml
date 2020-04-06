@@ -60,7 +60,7 @@
                                    Margin="3"/>
                         
                         <GroupBox Grid.Row="2" Header="Выбор порта:"
-                                  DataContext="{Binding MC_SignalReader}">
+                                  DataContext="{Binding SerialPortConnector}">
                             <StackPanel Orientation="Horizontal">
 
                                 <ListBox ItemsSource="{Binding AvailablePorts}"
@@ -79,17 +79,17 @@
                             </StackPanel>
                         </GroupBox>
 
-                        <ProgressBar Minimum="0" Maximum="{Binding MC_SignalReader.TotalValues}" Value="{Binding MC_SignalReader.ValuesLoaded, Mode=OneWay}"
+                        <ProgressBar Minimum="0" Maximum="{Binding TotalValues}" Value="{Binding RecievedValues, Mode=OneWay}"
                                      Height="25"
                                      Margin="3"
-                                     Visibility="{Binding MC_SignalReader.PrBarVis}"/>
+                                     Visibility="{Binding SerialPortConnector.PrBarVis}"/>
 
                         <StackPanel Orientation="Horizontal"
                                     Grid.Row="3"
                                     Margin="3"
-                                    Visibility="{Binding MC_SignalReader.PrBarVis}">
+                                    Visibility="{Binding SerialPortConnector.PrBarVis}">
 
-                            <TextBlock Text="{Binding MC_SignalReader.ValuesLoaded, Mode=OneWay}"
+                            <TextBlock Text="{Binding RecievedValues, Mode=OneWay}"
                                     HorizontalAlignment="Stretch"
                                     VerticalAlignment="Center"
                                     TextWrapping="Wrap"
@@ -101,7 +101,7 @@
                                         TextWrapping="Wrap"
                                         Margin="3"/>
 
-                            <TextBlock Text="{Binding MC_SignalReader.TotalValues}"
+                            <TextBlock Text="{Binding TotalValues}"
                                         HorizontalAlignment="Stretch"
                                         VerticalAlignment="Center"
                                         TextWrapping="Wrap"

@@ -76,6 +76,28 @@
             <TextBlock Text="{Binding Plot.SizeInfo}"
                        Margin="3"
                        FontWeight="Bold"/>
+
+            <GroupBox>
+
+                <GroupBox.Header>
+                    <TextBlock Text="Каналы"
+                               Margin="3"
+                               FontWeight="Bold"/>
+                </GroupBox.Header>
+                
+                <ItemsControl ItemsSource="{Binding Plot.Plots}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <Line X1="0" X2="40" Y1="10" Y2="10" Stroke="{Binding PlotBrush}" StrokeThickness="3"
+                                      Margin="3"/>
+                                <TextBlock Text="{Binding ChannelName}" Margin="3"/>
+                                <TextBlock Text="{Binding ChannelCode}" Margin="3"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </GroupBox>
         </StackPanel>
 
         <ContentControl Style="{StaticResource infoContent}"

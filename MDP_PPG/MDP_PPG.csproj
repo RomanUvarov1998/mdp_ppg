@@ -72,6 +72,9 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Converters\Parent2ChildrenMessageConverter.cs" />
+    <Compile Include="EntitiesEditing\SerialPortConnector.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="EntitiesEditing\SignalFileReader.cs" />
     <Compile Include="EntitiesEditing\SignalPortReader.cs" />
     <Compile Include="EntitiesEditing\SignalReader.cs" />
