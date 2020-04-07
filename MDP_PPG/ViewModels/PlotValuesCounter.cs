@@ -1,6 +1,7 @@
 ﻿using PPG_Database.KeepingModels;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -10,7 +11,7 @@ using System.Windows.Media;
 
 namespace MDP_PPG.ViewModels
 {
-	public class PlotValuesCounter
+	public class PlotValuesCounter : INotifyPropertyChanged
 	{
 		public void SetData(Recording recording, double fs, double pixelsPerDip)
 		{
@@ -20,6 +21,7 @@ namespace MDP_PPG.ViewModels
 			Recording = recording;
 
 			SignalData[] sds = Recording.SignalDatas.ToArray();
+			PlotDataKeepers = new List<PlotDataKeeper>();
 			for (int i = 0; i < Recording.SignalDatas.Count; ++i)
 			{
 				var sdcvm = new PlotDataKeeper(sds[i], Recording.Fs, LineBrushes[i]);
@@ -54,7 +56,7 @@ namespace MDP_PPG.ViewModels
 		};
 
 		private double PixelsPerDip;
-		
+
 		public Size AllPlotSize
 		{
 			get
@@ -79,7 +81,8 @@ namespace MDP_PPG.ViewModels
 			}
 		}
 
-		public List<PlotDataKeeper> PlotDataKeepers = new List<PlotDataKeeper>();
+		public List<PlotDataKeeper> PlotDataKeepers;
+
 		private Recording Recording;
 
 		public double Ts;
@@ -92,6 +95,7 @@ namespace MDP_PPG.ViewModels
 
 		public double X_Range;
 		public double Y_Range;
+		private List<PlotDataKeeper> plotDataKeepers;
 
 		public void HighLightPointNearestTo(Point point, Rect rectWindow,
 			GeometryGroup ggCircle, GeometryGroup ggText)
@@ -139,22 +143,24 @@ namespace MDP_PPG.ViewModels
 		}
 
 		public void SetContainers(
-			GeometryGroup plotGrid, 
-			GeometryGroup x_Axis, 
+			GeometryGroup plotGrid,
+			GeometryGroup x_Axis,
 			GeometryGroup y_Axis,
-			Rect rectWindow, Size scale)
+			Rect rectWindow, double scaleX)
 		{
 			//------------------- draw plot --------------------------
 			#region plot
+			Size mainScale = new Size(scaleX, PlotDataKeepers.First(pdc => pdc.IsSelected).ScaleY);
+
 			foreach (var pdc in PlotDataKeepers)
 			{
-				var sY = pdc.ScaleY;
+				var scalePlot = new Size(scaleX, pdc.ScaleY);
 				pdc.DrawnPoints = pdc.OriginalPoints
 					.Where(p =>
-						p.X * scale.Width >= rectWindow.Left &&
-						p.X * scale.Width <= rectWindow.Right)
+						p.X * scaleX >= rectWindow.Left &&
+						p.X * scaleX <= rectWindow.Right)
 					.Select(p => new PlotDataPoint(
-						new Point(WtoD_X(p.X, rectWindow, scale), WtoD_Y(p.Y, rectWindow, scale)),
+						new Point(WtoD_X(p.X, rectWindow, scalePlot), WtoD_Y(p.Y, rectWindow, scalePlot)),
 						p)
 					)
 					.ToArray();
@@ -165,7 +171,7 @@ namespace MDP_PPG.ViewModels
 
 				pdc.Points = pc;
 			}
-			
+
 			#endregion
 
 			//-------------------- draw X axis -------------------------
@@ -175,8 +181,8 @@ namespace MDP_PPG.ViewModels
 				new Point(rectWindow.Width, X_AXIS_Y));
 			x_Axis.Children.Add(axisX);
 
-			double valueLeft = rectWindow.Left / scale.Width;
-			double valueRight = rectWindow.Right / scale.Width;
+			double valueLeft = rectWindow.Left / mainScale.Width;
+			double valueRight = rectWindow.Right / mainScale.Width;
 
 			List<double> xAxisBarsXs = new List<double>();
 			if (PlotDataKeepers.Any(vm => vm.DrawnPoints.Length > 0))
@@ -184,7 +190,7 @@ namespace MDP_PPG.ViewModels
 				if (valueLeft > PlotDataKeepers.Max(vm => vm.DrawnPoints.Last().ValueTime.X))
 					throw new Exception("no plot");
 
-				double minTimeStep = MIN_BAR_DIST_X / scale.Width;
+				double minTimeStep = MIN_BAR_DIST_X / mainScale.Width;
 
 				int timePassed = (int)Math.Ceiling(valueLeft / minTimeStep);
 				double emptyLeft = timePassed * minTimeStep - valueLeft;
@@ -212,12 +218,12 @@ namespace MDP_PPG.ViewModels
 			List<double> yAxisBarsYs = new List<double>();
 			if (rectWindow.Bottom < rectWindow.Top) throw new Exception("wrong rect");
 
-			double distDegree_Y = Math.Ceiling(Math.Log10(MIN_BAR_DIST_Y / scale.Height));
+			double distDegree_Y = Math.Ceiling(Math.Log10(MIN_BAR_DIST_Y / mainScale.Height));
 			double dist_Y = Math.Pow(10.0, distDegree_Y);
 
 			//signal values for rect top and rect bottom
-			double maxValue = DtoW_Y(0.0, rectWindow, scale);
-			double minValue = DtoW_Y(rectWindow.Height, rectWindow, scale);
+			double maxValue = DtoW_Y(0.0, rectWindow, mainScale);
+			double minValue = DtoW_Y(rectWindow.Height, rectWindow, mainScale);
 
 			List<double> roundValues = new List<double>();
 
@@ -249,7 +255,7 @@ namespace MDP_PPG.ViewModels
 			roundValues = roundValues.OrderBy(v => v).ToList();
 
 			yAxisBarsYs = roundValues
-				.Select(v => WtoD_Y(v, rectWindow, scale))
+				.Select(v => WtoD_Y(v, rectWindow, mainScale))
 				.ToList();
 
 			//creating texts using Ys
@@ -309,7 +315,7 @@ namespace MDP_PPG.ViewModels
 			(rectWindow.Height + rectWindow.Top - y) / scale.Height;
 		private double DtoW_X(double x, Rect rectWindow, Size scale) =>
 			(x + rectWindow.Left) / scale.Width;
-		private double Dist2(Point p1, Point p2) => 
+		private double Dist2(Point p1, Point p2) =>
 			Math.Pow(p1.X - p2.X, 2) + Math.Pow(p1.Y - p2.Y, 2);
 
 		private const double X_AXIS_Y = 10.0;
@@ -339,5 +345,8 @@ namespace MDP_PPG.ViewModels
 				10,
 				Brushes.Gray,
 				PixelsPerDip);
+
+
+		public event PropertyChangedEventHandler PropertyChanged;
 	}
 }

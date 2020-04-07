@@ -69,9 +69,10 @@
 
             <TextBlock Text="Масштаб по величине"
                        Margin="3"/>
-            <TextBox Text="{Binding Y_ScaleStr, UpdateSourceTrigger=PropertyChanged}"
+            <TextBox Text="{Binding SignalDataGV.SelectedPlotScaleYStr, UpdateSourceTrigger=PropertyChanged}"
                      Width="auto"
-                     Margin="3,3,10,3"/>
+                     Margin="3,3,10,3"
+                     IsEnabled="{Binding SignalDataGV.ScaleY_IsEnabled}"/>
 
             <TextBlock Text="{Binding SignalDataGV.SizeInfo}"
                        Margin="3"
@@ -85,7 +86,8 @@
                                FontWeight="Bold"/>
                 </GroupBox.Header>
 
-                <ListView ItemsSource="{Binding SignalDataGV.Plots}" SelectedItem="{Binding SignalDataGV.SelectedPlot}">
+                <ListView ItemsSource="{Binding SignalDataGV.Plots}" 
+                          SelectedItem="{Binding SignalDataGV.SelectedPlot}">
                     <ListView.View>
                         <GridView>
                             <GridViewColumn Header="Цвет" Width="40">
@@ -137,9 +139,9 @@
                       Background="White"
                       HorizontalAlignment="Right">
                     <Path Data="{Binding SignalDataGV.Y_Axis}"
-                              Stroke="Black"
-                              StrokeThickness="1"
-                              SnapsToDevicePixels="True"/>
+                            Stroke="{Binding SignalDataGV.SelectedPlot.PlotBrush}"
+                            StrokeThickness="1"
+                            SnapsToDevicePixels="True"/>
                 </Grid>
 
                 <!-- Plot -->
@@ -205,7 +207,7 @@
                       HorizontalAlignment="Stretch">
 
                     <Path Data="{Binding SignalDataGV.X_Axis}"
-                              Stroke="Black"
+                              Stroke="{Binding SignalDataGV.SelectedPlot.PlotBrush}"
                               StrokeThickness="1"
                               SnapsToDevicePixels="True"/>
 

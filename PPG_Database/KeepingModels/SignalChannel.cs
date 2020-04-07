@@ -34,5 +34,21 @@ namespace PPG_Database.KeepingModels
 		{
 			throw new NotImplementedException();
 		}
+
+		public static double GetPlotScaleY(SignalChannel signalChannel)
+		{
+			if (!ChannelCode_PlotScaleYs.ContainsKey(signalChannel.ChannelCode))
+				ChannelCode_PlotScaleYs.Add(signalChannel.ChannelCode, 1);
+
+			return ChannelCode_PlotScaleYs[signalChannel.ChannelCode];
+		}
+		public static void SetPlotScaleY(SignalChannel signalChannel, double scaleY)
+		{
+			if (!ChannelCode_PlotScaleYs.ContainsKey(signalChannel.ChannelCode))
+				ChannelCode_PlotScaleYs.Add(signalChannel.ChannelCode, 1);
+
+			ChannelCode_PlotScaleYs[signalChannel.ChannelCode] = scaleY;
+		}
+		private static Dictionary<int, double> ChannelCode_PlotScaleYs = new Dictionary<int, double>();
 	}
 }

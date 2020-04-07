@@ -50,8 +50,8 @@ namespace MDP_PPG.ViewModels
 		public string ChannelName => Instance.SignalChannel.Name;
 		public string ChannelCode => Instance.SignalChannel.ChannelCode.ToString();
 		public double PlotOpacity => IsSelected ? 1.0 : 0.5;
-		public bool IsSelected 
-		{ 
+		public bool IsSelected
+		{
 			get => isSelected;
 			set
 			{
@@ -59,7 +59,13 @@ namespace MDP_PPG.ViewModels
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PlotOpacity)));
 			}
 		}
-		public double ScaleY;
+		public double ScaleY
+		{
+			get => SignalChannel.GetPlotScaleY(Instance.SignalChannel);
+			set => SignalChannel.SetPlotScaleY(Instance.SignalChannel, value);
+		}
+
+		public double Max_Y => Math.Max(0, OriginalPoints.Max(p => p.Y));
 
 		public event PropertyChangedEventHandler PropertyChanged;
 

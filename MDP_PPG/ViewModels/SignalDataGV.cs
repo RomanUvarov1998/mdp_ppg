@@ -15,23 +15,24 @@ namespace MDP_PPG.ViewModels
 		public SignalDataGV(double pixelsPerDip)
 		{
 			PixelsPerDip = pixelsPerDip;
+			PlotValuesCounter = new PlotValuesCounter();
 		}
 		private double PixelsPerDip;
 
-		public void SetData(Recording instance, Size currentScale)
+		public void SetData(Recording instance, double scaleX)
 		{
 			Instance = instance ?? throw new ArgumentNullException();
 
 			PlotValuesCounter.SetData(instance, 250.0, PixelsPerDip);
 
-			CurrentScale = currentScale;
+			ScaleX = scaleX;
 
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SizeInfo)));
 		}
 
-		private PlotValuesCounter PlotValuesCounter = new PlotValuesCounter();
+		private PlotValuesCounter PlotValuesCounter;
 
-		private Size CurrentScale;
+		private double ScaleX;
 		private Rect RectWindow;
 		private Point MousePos;
 
@@ -39,20 +40,34 @@ namespace MDP_PPG.ViewModels
 		{
 			get
 			{
-				var notScaledRect = PlotValuesCounter.AllPlotSize;
+				Size notScaledRect = PlotValuesCounter.AllPlotSize;
 
-				return new Size(
-					notScaledRect.Width * CurrentScale.Width,
-					notScaledRect.Height * CurrentScale.Height);
+				double scaledWidth = notScaledRect.Width * ScaleX;
+
+				double scaledHeight = PlotValuesCounter.PlotDataKeepers.Select(pl => pl.ScaleY * pl.Max_Y).Max();
+
+				return new Size(scaledWidth, scaledHeight);
 			}
 		}
 
-		public void UpdatePlot(Rect rectWindow, Size currentScale)
+		public void UpdatePlot(Rect rectWindow, double scaleX)
 		{
 			RectWindow = rectWindow;
-			CurrentScale = currentScale;
+			ScaleX = scaleX;
 
-			Plots = null;
+			plotSelectedByUser = false;
+			if (selectedPlot == null || !PlotValuesCounter.PlotDataKeepers.Contains(selectedPlot))
+				selectedPlot = PlotValuesCounter.PlotDataKeepers.FirstOrDefault();
+
+			if (selectedPlot != null && PlotValuesCounter.PlotDataKeepers != null)
+				foreach (var pl in PlotValuesCounter.PlotDataKeepers)
+					pl.IsSelected = (pl == selectedPlot);
+			
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Plots)));
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedPlot)));
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedPlotScaleYStr)));
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ScaleY_IsEnabled)));
+
 			X_Axis = new GeometryGroup();
 			Y_Axis = new GeometryGroup();
 			PlotGrid = new GeometryGroup();
@@ -61,9 +76,9 @@ namespace MDP_PPG.ViewModels
 				PlotGrid,
 				X_Axis,
 				Y_Axis,
-				RectWindow, CurrentScale);
+				RectWindow, scaleX);
 
-			Plots = PlotValuesCounter.PlotDataKeepers;
+			plotSelectedByUser = true;
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(X_Axis)));
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Y_Axis)));
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PlotGrid)));
@@ -92,50 +107,71 @@ namespace MDP_PPG.ViewModels
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HighLightedPointText)));
 		}
 
-		public void SetYScale(double newValue)
+		public void SetXScale(double scaleX)
 		{
-			CurrentScale.Height = newValue;
-			UpdatePlot(RectWindow, CurrentScale);
+			ScaleX = scaleX;
+			UpdatePlot(RectWindow, ScaleX);
 		}
-		public void SetXScale(double newValue)
-		{
-			CurrentScale.Width = newValue;
-			UpdatePlot(RectWindow, CurrentScale);
-		}
-		public void Change_XY_Scale(Rect rectWindow, Size newScale)
-		{
-			RectWindow = rectWindow;
-			CurrentScale = newScale;
+		//public void Change_XY_Scale(Rect rectWindow, Size newScale)
+		//{
+		//	RectWindow = rectWindow;
+		//	CurrentScale = newScale;
 
-			UpdatePlot(RectWindow, CurrentScale);
-		}
+		//	UpdatePlot(RectWindow, CurrentScale);
+		//}
 
 		public Recording Instance { get; private set; }
 
 		public string SizeInfo => Instance == null ? string.Empty : $"Размер {Instance.SignalDatas.Sum(sd => sd.Data.Length).ToString("N")} байт";
 
-		public List<PlotDataKeeper> Plots
-		{
-			get => plots;
-			set
-			{
-				plots = value;
-				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Plots)));
-			}
-		}
+		private bool plotSelectedByUser = true;
+		//public List<PlotDataKeeper> Plots
+		//{
+		//	get => plots;
+		//	set
+		//	{
+		//		plots = value;
+		//		PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Plots)));
+		//	}
+		//}
 		public PlotDataKeeper SelectedPlot
 		{
 			get => selectedPlot;
 			set
 			{
-				selectedPlot = value;
-				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedPlot)));
+				if (plotSelectedByUser)
+				{
+					selectedPlot = value;
 
-				if (selectedPlot != null || Plots != null)
-					foreach (var pl in Plots)
-						pl.IsSelected = (pl == selectedPlot);
+					if (selectedPlot != null && PlotValuesCounter.PlotDataKeepers != null)
+						foreach (var pl in PlotValuesCounter.PlotDataKeepers)
+							pl.IsSelected = (pl == selectedPlot);
+
+					if (selectedPlot != null)
+						UpdatePlot(RectWindow, ScaleX);
+				}
+
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedPlot)));
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedPlotScaleYStr)));
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ScaleY_IsEnabled)));
 			}
 		}
+		public string SelectedPlotScaleYStr
+		{
+			get => SelectedPlot != null ? SelectedPlot.ScaleY.ToString() : string.Empty;
+			set
+			{
+				double v = -1.0;
+				if (double.TryParse(value, out v) && v > 0)
+				{
+					SelectedPlot.ScaleY = v;
+					UpdatePlot(RectWindow, ScaleX);
+				}
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedPlotScaleYStr)));
+			}
+		}
+		public bool ScaleY_IsEnabled => SelectedPlot != null;
+		public List<PlotDataKeeper> Plots => PlotValuesCounter.PlotDataKeepers;
 		public GeometryGroup PlotGrid { get; set; } = new GeometryGroup();
 		public GeometryGroup X_Axis { get; set; } = new GeometryGroup();
 		public GeometryGroup Y_Axis { get; set; } = new GeometryGroup();
@@ -146,7 +182,8 @@ namespace MDP_PPG.ViewModels
 		public event PropertyChangedEventHandler PropertyChanged;
 
 
-		private List<PlotDataKeeper> plots = new List<PlotDataKeeper>();
+		//private List<PlotDataKeeper> plots = new List<PlotDataKeeper>();
 		private PlotDataKeeper selectedPlot;
+		private PlotValuesCounter plotValuesCounter;
 	}
 }

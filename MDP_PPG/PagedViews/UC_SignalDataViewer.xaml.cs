@@ -32,9 +32,8 @@ namespace MDP_PPG.PagedViews
 
 			DataContext = this;
 
-			CurrentScale = new Size(1000, 1);
+			ScaleX = 1000;
 			SampleWidthStr = "1000";
-			Y_ScaleStr = "1";
 
 			Max_X = 100;
 
@@ -121,25 +120,7 @@ namespace MDP_PPG.PagedViews
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Y_Axis_ViewportSize)));
 			}
 		}
-
-		public string Y_ScaleStr
-		{
-			get => y_ScaleStr;
-			set
-			{
-				y_ScaleStr = value;
-
-				double v = -1.0;
-				if (double.TryParse(value, out v) && v > 0)
-				{
-					CurrentScale.Height = v;
-					SignalDataGV?.SetYScale(CurrentScale.Height);
-					UpdateScrollBars(false, RectWindowCenterLocal);
-				}
-
-				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Y_ScaleStr)));
-			}
-		}
+		
 		public string SampleWidthStr
 		{
 			get => sampleWidthStr;
@@ -150,8 +131,8 @@ namespace MDP_PPG.PagedViews
 				double v = -1.0;
 				if (double.TryParse(value, out v) && v > 0)
 				{
-					CurrentScale.Width = v;
-					SignalDataGV?.SetXScale(CurrentScale.Width);
+					ScaleX = v;
+					SignalDataGV?.SetXScale(ScaleX);
 					UpdateScrollBars(false, RectWindowCenterLocal);
 				}
 
@@ -202,13 +183,7 @@ namespace MDP_PPG.PagedViews
 					.FirstOrDefaultAsync(r => r.Id == recording.Id);
 			}
 
-			if (rec != null)
-			{
-				Dispatcher.Invoke(delegate
-				{
-					GiveData(rec);
-				});
-			}
+			GiveData(rec);
 
 			IsLoadingData = false;
 		}
@@ -217,8 +192,8 @@ namespace MDP_PPG.PagedViews
 			if (rec != null)
 			{
 				SignalDataGV = new SignalDataGV(PixelsPerDip);
-				SignalDataGV.SetData(rec, CurrentScale);
-				plotGrid.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+				SignalDataGV.SetData(rec, ScaleX);
+				//plotGrid.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
 				OnWindowResized();
 			}
 		}
@@ -226,7 +201,7 @@ namespace MDP_PPG.PagedViews
 		{
 			UpdatePlotClip();
 			UpdateScrollBars(false, RectWindowCenterLocal);
-			SignalDataGV?.UpdatePlot(RectWindow, CurrentScale);
+			SignalDataGV?.UpdatePlot(RectWindow, ScaleX);
 			SignalDataGV?.ClearHighlightedPoint();
 		}
 
@@ -248,7 +223,7 @@ namespace MDP_PPG.PagedViews
 
 				MouseRightButtonDownPoint = currentMousePosition;
 
-				SignalDataGV?.UpdatePlot(RectWindow, CurrentScale);
+				SignalDataGV?.UpdatePlot(RectWindow, ScaleX);
 			}
 		}
 		private void Plot_MouseLeave(object sender, MouseEventArgs e)
@@ -285,7 +260,7 @@ namespace MDP_PPG.PagedViews
 			if (SignalDataGV == null) return;
 			if (IsMouseRightButtonDown) return;
 
-			if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))
+			/*if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))
 			{
 				Rect curRect = RectWindow;
 				Point mousePosLocal = e.GetPosition(plotGrid);
@@ -302,7 +277,7 @@ namespace MDP_PPG.PagedViews
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Y_ScaleStr)));
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SampleWidthStr)));
 			}
-			else if (Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift))
+			else */if (Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift))
 			{
 				if (e.Delta > 0)
 					ScrollValue_X += Max_X * 0.05;
@@ -321,17 +296,17 @@ namespace MDP_PPG.PagedViews
 				e.Handled = true;
 			}
 
-			SignalDataGV.UpdatePlot(RectWindow, CurrentScale);
+			SignalDataGV.UpdatePlot(RectWindow, ScaleX);
 			SignalDataGV.RefreshHighlightedPoint();
 		}
 		private void SbX_Scroll(object sender, ScrollEventArgs e)
 		{
-			SignalDataGV?.UpdatePlot(RectWindow, CurrentScale);
+			SignalDataGV?.UpdatePlot(RectWindow, ScaleX);
 			SignalDataGV?.RefreshHighlightedPoint();
 		}
 		private void SbY_Scroll(object sender, ScrollEventArgs e)
 		{
-			SignalDataGV?.UpdatePlot(RectWindow, CurrentScale);
+			SignalDataGV?.UpdatePlot(RectWindow, ScaleX);
 			SignalDataGV?.RefreshHighlightedPoint();
 		}
 
@@ -383,7 +358,7 @@ namespace MDP_PPG.PagedViews
 
 
 		//--------------------------------------- Visual Info ---------------------------------------
-		private Size CurrentScale;
+		private double ScaleX;
 		private Rect RectWindow => new Rect(
 			ScrollValue_X,
 			Max_Y - ScrollValue_Y,
@@ -397,7 +372,6 @@ namespace MDP_PPG.PagedViews
 		private bool isLoadingData;
 		private SignalDataGV plot;
 		private string sampleWidthStr;
-		private string y_ScaleStr;
 		private double max_X;
 		private double max_Y;
 		private RectangleGeometry plotClip = new RectangleGeometry();
