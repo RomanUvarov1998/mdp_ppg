@@ -49,12 +49,23 @@ namespace MDP_PPG.ViewModels
 		}
 		public string ChannelName => Instance.SignalChannel.Name;
 		public string ChannelCode => Instance.SignalChannel.ChannelCode.ToString();
-
+		public double PlotOpacity => IsSelected ? 1.0 : 0.5;
+		public bool IsSelected 
+		{ 
+			get => isSelected;
+			set
+			{
+				isSelected = value;
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PlotOpacity)));
+			}
+		}
+		public double ScaleY;
 
 		public event PropertyChangedEventHandler PropertyChanged;
 
 
 		private Brush plotBrush;
 		private PointCollection points;
+		private bool isSelected = false;
 	}
 }

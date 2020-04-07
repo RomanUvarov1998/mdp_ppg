@@ -85,18 +85,22 @@
                                FontWeight="Bold"/>
                 </GroupBox.Header>
 
-                <ItemsControl ItemsSource="{Binding SignalDataGV.Plots}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Horizontal">
-                                <Line X1="0" X2="40" Y1="10" Y2="10" Stroke="{Binding PlotBrush}" StrokeThickness="3"
-                                      Margin="3"/>
-                                <TextBlock Text="{Binding ChannelName}" Margin="3"/>
-                                <TextBlock Text="{Binding ChannelCode}" Margin="3"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                <ListView ItemsSource="{Binding SignalDataGV.Plots}" SelectedItem="{Binding SignalDataGV.SelectedPlot}">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="Цвет" Width="40">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Line X1="0" X2="40" Y1="10" Y2="10" Stroke="{Binding PlotBrush}" StrokeThickness="3"
+                                                Margin="3"/>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="Канал" DisplayMemberBinding="{Binding ChannelName}"/>
+                            <GridViewColumn Header="№" DisplayMemberBinding="{Binding ChannelCode}"/>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
             </GroupBox>
         </StackPanel>
 
@@ -158,6 +162,7 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Polyline Points="{Binding Points}"
+                                          Opacity="{Binding PlotOpacity}"
                                             Stroke="{Binding PlotBrush}"
                                             StrokeThickness="3"
                                             SnapsToDevicePixels="True"

@@ -22,14 +22,14 @@ namespace MDP_PPG.ViewModels
 		{
 			Instance = instance ?? throw new ArgumentNullException();
 
-			SignalContainer.SetData(instance, 250.0, PixelsPerDip);
+			PlotValuesCounter.SetData(instance, 250.0, PixelsPerDip);
 
 			CurrentScale = currentScale;
 
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SizeInfo)));
 		}
 
-		private PlotValuesCounter SignalContainer = new PlotValuesCounter();
+		private PlotValuesCounter PlotValuesCounter = new PlotValuesCounter();
 
 		private Size CurrentScale;
 		private Rect RectWindow;
@@ -39,7 +39,7 @@ namespace MDP_PPG.ViewModels
 		{
 			get
 			{
-				var notScaledRect = SignalContainer.AllPlotSize;
+				var notScaledRect = PlotValuesCounter.AllPlotSize;
 
 				return new Size(
 					notScaledRect.Width * CurrentScale.Width,
@@ -57,13 +57,13 @@ namespace MDP_PPG.ViewModels
 			Y_Axis = new GeometryGroup();
 			PlotGrid = new GeometryGroup();
 
-			SignalContainer.SetContainers(
+			PlotValuesCounter.SetContainers(
 				PlotGrid,
 				X_Axis,
 				Y_Axis,
 				RectWindow, CurrentScale);
 
-			Plots = SignalContainer.PlotDataKeepers;
+			Plots = PlotValuesCounter.PlotDataKeepers;
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(X_Axis)));
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Y_Axis)));
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PlotGrid)));
@@ -75,7 +75,7 @@ namespace MDP_PPG.ViewModels
 			HighLightedPointText = new GeometryGroup();
 			MousePos = mousePosition;
 
-			SignalContainer.HighLightPointNearestTo(mousePosition, RectWindow, HighLightedPoint, HighLightedPointText);
+			PlotValuesCounter.HighLightPointNearestTo(mousePosition, RectWindow, HighLightedPoint, HighLightedPointText);
 
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HighLightedPoint)));
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HighLightedPointText)));
@@ -114,13 +114,26 @@ namespace MDP_PPG.ViewModels
 
 		public string SizeInfo => Instance == null ? string.Empty : $"Размер {Instance.SignalDatas.Sum(sd => sd.Data.Length).ToString("N")} байт";
 
-		public List<PlotDataKeeper> Plots 
-		{ 
+		public List<PlotDataKeeper> Plots
+		{
 			get => plots;
 			set
 			{
 				plots = value;
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Plots)));
+			}
+		}
+		public PlotDataKeeper SelectedPlot
+		{
+			get => selectedPlot;
+			set
+			{
+				selectedPlot = value;
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedPlot)));
+
+				if (selectedPlot != null || Plots != null)
+					foreach (var pl in Plots)
+						pl.IsSelected = (pl == selectedPlot);
 			}
 		}
 		public GeometryGroup PlotGrid { get; set; } = new GeometryGroup();
@@ -134,5 +147,6 @@ namespace MDP_PPG.ViewModels
 
 
 		private List<PlotDataKeeper> plots = new List<PlotDataKeeper>();
+		private PlotDataKeeper selectedPlot;
 	}
 }

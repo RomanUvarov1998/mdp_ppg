@@ -146,9 +146,10 @@ namespace MDP_PPG.ViewModels
 		{
 			//------------------- draw plot --------------------------
 			#region plot
-			foreach (var vm in PlotDataKeepers)
+			foreach (var pdc in PlotDataKeepers)
 			{
-				vm.DrawnPoints = vm.OriginalPoints
+				var sY = pdc.ScaleY;
+				pdc.DrawnPoints = pdc.OriginalPoints
 					.Where(p =>
 						p.X * scale.Width >= rectWindow.Left &&
 						p.X * scale.Width <= rectWindow.Right)
@@ -158,11 +159,11 @@ namespace MDP_PPG.ViewModels
 					)
 					.ToArray();
 
-				var pc = new PointCollection(vm.DrawnPoints.Length);
-				foreach (var pdp in vm.DrawnPoints)
+				var pc = new PointCollection(pdc.DrawnPoints.Length);
+				foreach (var pdp in pdc.DrawnPoints)
 					pc.Add(pdp.DisplayPoint);
 
-				vm.Points = pc;
+				pdc.Points = pc;
 			}
 			
 			#endregion
