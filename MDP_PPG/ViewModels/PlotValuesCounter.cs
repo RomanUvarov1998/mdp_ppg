@@ -95,7 +95,6 @@ namespace MDP_PPG.ViewModels
 
 		public double X_Range;
 		public double Y_Range;
-		private List<PlotDataKeeper> plotDataKeepers;
 
 		public void HighLightPointNearestTo(Point point, Rect rectWindow,
 			GeometryGroup ggCircle, GeometryGroup ggText)

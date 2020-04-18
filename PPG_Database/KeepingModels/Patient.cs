@@ -19,6 +19,7 @@ namespace PPG_Database.KeepingModels
 			Surname = surname;
 			Name = name;
 			Patronimyc = patronimyc;
+			Id = id;
 		}
 
 		[Required]

@@ -49,6 +49,7 @@ namespace MDP_PPG.ViewModels
 		}
 		public string ChannelName => Instance.SignalChannel.Name;
 		public string ChannelCode => Instance.SignalChannel.ChannelCode.ToString();
+		public string ValueUnitName => Instance.SignalChannel.ValueUnitName;
 		public double PlotOpacity => IsSelected ? 1.0 : 0.5;
 		public bool IsSelected
 		{

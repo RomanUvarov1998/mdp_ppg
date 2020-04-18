@@ -49,9 +49,10 @@ namespace PPG_Database
 		{
 			if (!SignalChannels.Any())
 			{
-				SignalChannels.Add(new SignalChannel("ЭКГ", 0) { IsInUse = true });
-				SignalChannels.Add(new SignalChannel("ФПГ ИК", 1) { IsInUse = true });
-				SignalChannels.Add(new SignalChannel("ФПГ К", 2) { IsInUse = true });
+				SignalChannels.Add(new SignalChannel("ЭКГ", 0, "мВ") { IsInUse = true });
+				SignalChannels.Add(new SignalChannel("ФПГ ИК", 1, "мВ") { IsInUse = true });
+				SignalChannels.Add(new SignalChannel("ФПГ К", 2, "мВ") { IsInUse = true });
+				SignalChannels.Add(new SignalChannel("АД", 3, "мм рт. ст.") { IsInUse = true });
 
 				SaveChanges();
 			}

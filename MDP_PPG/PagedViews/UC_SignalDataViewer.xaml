@@ -55,7 +55,7 @@
 
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="auto"/>
-            <ColumnDefinition Width="150"/>
+            <ColumnDefinition Width="200"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
@@ -98,8 +98,9 @@
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>
-                            <GridViewColumn Header="Канал" DisplayMemberBinding="{Binding ChannelName}"/>
+                            <GridViewColumn Header="Канал" DisplayMemberBinding="{Binding ChannelName}"/> 
                             <GridViewColumn Header="№" DisplayMemberBinding="{Binding ChannelCode}"/>
+                            <GridViewColumn Header="Единицы" DisplayMemberBinding="{Binding ValueUnitName}"/>
                         </GridView>
                     </ListView.View>
                 </ListView>

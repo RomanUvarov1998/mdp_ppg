@@ -31,8 +31,6 @@ namespace MDP_PPG.EntitiesEditing
 			if (OF_Dialog.ShowDialog() == true)
 				path = OF_Dialog.FileName;
 			else return;
-
-			byte[] data;
 					 
 			try
 			{
@@ -46,7 +44,7 @@ namespace MDP_PPG.EntitiesEditing
 					string line = sr.ReadLine();
 					if (line == null) throw new Exception("Нет списка каналов (((");
 					int[] channelsCodes = line.Split('\t').Select(s => int.Parse(s)).ToArray();
-					
+
 					line = sr.ReadLine();
 					if (line == null) throw new Exception("Нет количества значений (((");
 					UInt32 signalLength = (UInt32)double.Parse(line, ci);
@@ -81,7 +79,6 @@ namespace MDP_PPG.EntitiesEditing
 			}
 
 			NotifyResult($"Файл '{Path.GetFileName(path)}' успешно загружен", true);
-			//this.Recording.SignalData.Data = data;
 
 			_recordingRxModel.PutInModel(Recording, SignalChannels);
 			BlockInterface(false);

@@ -12,16 +12,18 @@ namespace PPG_Database.KeepingModels
 		{
 
 		}
-		public SignalChannel(string name, int channelCode) : this()
+		public SignalChannel(string name, int channelCode, string valueUnitName) : this()
 		{
 			Name = name;
 			ChannelCode = channelCode;
+			ValueUnitName = valueUnitName;
 		}
 
 
 		public string Name { get; set; }
 		public bool IsInUse { get; set; }
 		public int ChannelCode { get; set; }
+		public string ValueUnitName { get; set; }
 
 
 		//------------------- Navigation Fields -----------------------

@@ -110,6 +110,8 @@ namespace MDP_PPG.EntitiesEditing
 		private void SerialPortConnector_DoWork(object sender, DoWorkEventArgs e)
 		{
 			_setUIBlocked(true);
+			_serialPort.DiscardInBuffer();
+			_serialPort.DiscardOutBuffer();
 
 			switch (_mode)
 			{
@@ -186,7 +188,7 @@ namespace MDP_PPG.EntitiesEditing
 		{
 			if (_serialPort != null)
 			{
-				_serialPort.Close();
+				if (_serialPort.IsOpen) _serialPort.Close();
 				_serialPort.Dispose();
 			}
 
@@ -201,42 +203,31 @@ namespace MDP_PPG.EntitiesEditing
 			_serialPort.ReadTimeout = SerialPort.InfiniteTimeout; //500;
 			_serialPort.WriteTimeout = SerialPort.InfiniteTimeout; //500;
 		}
-		private void Send(byte data)
+		private bool AskFor(MC_Tokens token)
 		{
-			_writeBuffer[0] = data;
+			_serialPort.DiscardInBuffer();
+			_serialPort.DiscardOutBuffer();
+
+			_writeBuffer[0] = (byte)token;
 			_serialPort.Write(_writeBuffer, 0, _writeBuffer.Length);
-		}
-		private void RecieveBuffer(MC_Tokens txToken, MC_Tokens? rxToken2 = null)
-		{
-			int rxToken;
 
-			while (true)
-			{
-				rxToken = _serialPort.ReadByte();
+			while (_serialPort.BytesToRead > _readBuffer.Length) ;
 
-				if (rxToken == (byte)txToken) break;
+			_serialPort.Read(_readBuffer, 0, _readBuffer.Length);
 
-				if (rxToken2 != null && (int)rxToken2.Value == rxToken) break;
-
-				if (this.CancellationPending) return;
-			}
-
-			_readBuffer[0] = (byte)rxToken;
-			_serialPort.Read(_readBuffer, 1, _readBuffer.Length - 1);
+			return _readBuffer[0] == (byte)token;
 		}
 
 		private void UploadSignal(DoWorkEventArgs e)
 		{
 			if (this.CancellationPending) goto BackgroundWorkCanceled;
 
-			Send((byte)MC_Tokens.CHANNELS_MASK);
-			RecieveBuffer(MC_Tokens.CHANNELS_MASK);
+			if(!AskFor(MC_Tokens.CHANNELS_MASK)) throw new Exception("Не получилось получить маску каналов");
 			int channelsMask = _readBuffer[1];
 
 			if (this.CancellationPending) goto BackgroundWorkCanceled;
 
-			Send((byte)MC_Tokens.GET_SIGNAL_LENGTH);
-			RecieveBuffer(MC_Tokens.GET_SIGNAL_LENGTH);
+			if (!AskFor(MC_Tokens.GET_SIGNAL_LENGTH)) throw new Exception("Не получилось получить длину сигнала");
 			UInt32 signalLength = BitConverter.ToUInt32(_readBuffer, 1);
 			_notifyTotal.Invoke(signalLength);
 			_recordingRxModel.PrepareToRecieve(channelsMask, signalLength);
@@ -245,24 +236,25 @@ namespace MDP_PPG.EntitiesEditing
 
 			while (true)
 			{
-				if (this.CancellationPending)
-				{
-					e.Cancel = true;
-					return;
-				}
+				if (this.CancellationPending) goto BackgroundWorkCanceled;
 
-				Send((byte)MC_Tokens.GET_DATA);
-				RecieveBuffer(MC_Tokens.GET_DATA, MC_Tokens.DATA_END);
-				if ((MC_Tokens)_readBuffer[0] == MC_Tokens.DATA_END)
+				if (AskFor(MC_Tokens.GET_DATA))
+				{
+
+					double value = BitConverter.ToUInt16(_readBuffer, 2);
+					_recordingRxModel.AppendValue(_readBuffer[1], value);
+					_notifyRecieved.Invoke(_recordingRxModel.RecievedValues);
+				}
+				else if ((MC_Tokens)_readBuffer[0] == MC_Tokens.DATA_END)
 				{
 					break;
 				}
+				else
+				{
+					throw new Exception("Ошибка во время получения значений сигнала");
+				}
 
 				if (this.CancellationPending) goto BackgroundWorkCanceled;
-
-				double value = BitConverter.ToUInt16(_readBuffer, 2);
-				_recordingRxModel.AppendValue(_readBuffer[1], value);
-				_notifyRecieved.Invoke(_recordingRxModel.RecievedValues);
 			}
 
 			if (this.CancellationPending) goto BackgroundWorkCanceled;
@@ -289,14 +281,24 @@ namespace MDP_PPG.EntitiesEditing
 
 			if (this.CancellationPending) goto BackgroundWorkCanceled;
 
-			Send((byte)MC_Tokens.SAVE_SETTINGS);
+			_serialPort.DiscardInBuffer();
+			_serialPort.DiscardOutBuffer();
+
+			_writeBuffer[0] = (byte)MC_Tokens.SAVE_SETTINGS;
+			_serialPort.Write(_writeBuffer, 0, _writeBuffer.Length);
 
 			if (this.CancellationPending) goto BackgroundWorkCanceled;
 
-			Send((byte)mask1);
-			RecieveBuffer(MC_Tokens.SAVE_SETTINGS);
+			_serialPort.DiscardInBuffer();
+			_serialPort.DiscardOutBuffer();
 
-			if (mask1 != _readBuffer[1])
+			_writeBuffer[0] = (byte)mask1;
+			_serialPort.Write(_writeBuffer, 0, _writeBuffer.Length);
+
+
+			_serialPort.Read(_readBuffer, 0, _readBuffer.Length);
+
+			if (_readBuffer[0] != (byte)MC_Tokens.SAVE_SETTINGS || _readBuffer[1] != mask1)
 				throw new Exception("Настройки сохранены неуспешно");
 
 			e.Result = true;
